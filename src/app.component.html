@@ -14,7 +14,7 @@
       <app-login 
         class="block h-full w-full" 
         (loginSuccess)="onLoginSuccess()"
-        (guestMode)="onGuestMode()"
+        (guestMode)="goToDisplay()"
       />
     } @else if (viewMode() === 'admin') {
       <app-backoffice class="block h-full w-full" />
@@ -45,9 +45,9 @@
       }
 
       <button 
-        (click)="toggleMode()" 
+        (click)="viewMode() === 'admin' ? goToDisplay() : goToAdmin()" 
         class="bg-gray-800 border border-gray-600 rounded-full p-2 text-xs text-gray-400 hover:text-white hover:bg-gray-700 shadow-lg transition-all"
-        title="Cambiar vista (Admin/TV)"
+        title="Cambiar vista"
       >
         @if (viewMode() === 'admin') {
           <span>📺 Ir a TV</span>

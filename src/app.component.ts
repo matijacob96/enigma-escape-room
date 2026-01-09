@@ -16,7 +16,7 @@ type ViewMode = 'login' | 'admin' | 'display';
 export class AppComponent implements OnInit, OnDestroy {
   private service = inject(EscapeRoomService);
   
-  viewMode = signal<ViewMode>('login');
+  viewMode = signal<ViewMode>('display'); // Default: display (invitado)
   isLoading = signal(true);
   showControls = signal(true);
   
@@ -24,17 +24,36 @@ export class AppComponent implements OnInit, OnDestroy {
   private readonly HIDE_DELAY = 5000; // 5 segundos
 
   async ngOnInit() {
-    // Verificar si hay un callback de autenticación en la URL
-    const hasCallback = window.location.hash.includes('access_token');
+    const path = window.location.pathname;
+    const hash = window.location.hash;
     
-    if (hasCallback) {
+    // Verificar si hay un callback de autenticación en la URL
+    if (hash.includes('access_token')) {
       const success = await this.service.handleAuthCallback();
       if (success) {
+        this.navigateTo('/admin');
         this.viewMode.set('admin');
+      } else {
+        this.viewMode.set('display');
       }
-    } else if (this.service.isAuthenticated()) {
-      // Si ya está autenticado, ir directo al admin
-      this.viewMode.set('admin');
+    } 
+    // Rutas basadas en URL
+    else if (path === '/login') {
+      this.viewMode.set('login');
+    } 
+    else if (path === '/admin') {
+      // Si intenta acceder a admin, verificar autenticación
+      if (this.service.isAuthenticated()) {
+        this.viewMode.set('admin');
+      } else {
+        // Redirigir a login si no está autenticado
+        this.navigateTo('/login');
+        this.viewMode.set('login');
+      }
+    } 
+    else {
+      // Home (/) = Display por defecto (modo invitado)
+      this.viewMode.set('display');
     }
     
     this.isLoading.set(false);
@@ -43,6 +62,11 @@ export class AppComponent implements OnInit, OnDestroy {
 
   ngOnDestroy() {
     this.clearHideControlsTimer();
+  }
+
+  // Navegación sin recargar la página
+  private navigateTo(path: string) {
+    window.history.pushState({}, '', path);
   }
 
   // Detectar movimiento del mouse o toque
@@ -76,39 +100,37 @@ export class AppComponent implements OnInit, OnDestroy {
   }
 
   onLoginSuccess() {
+    this.navigateTo('/admin');
     this.viewMode.set('admin');
     this.showControls.set(true);
     this.clearHideControlsTimer();
   }
 
-  onGuestMode() {
-    // Modo invitado solo permite ver el display
+  goToAdmin() {
+    if (this.service.isAuthenticated()) {
+      this.navigateTo('/admin');
+      this.viewMode.set('admin');
+      this.showControls.set(true);
+      this.clearHideControlsTimer();
+    } else {
+      this.navigateTo('/login');
+      this.viewMode.set('login');
+    }
+  }
+
+  goToDisplay() {
+    this.navigateTo('/');
     this.viewMode.set('display');
     this.showControls.set(true);
     this.startHideControlsTimer();
   }
 
-  toggleMode() {
-    this.viewMode.update(mode => {
-      if (mode === 'admin') {
-        this.startHideControlsTimer();
-        return 'display';
-      }
-      if (mode === 'display') {
-        this.clearHideControlsTimer();
-        this.showControls.set(true);
-        // Si está autenticado puede volver a admin, si no va a login
-        return this.service.isAuthenticated() ? 'admin' : 'login';
-      }
-      return 'admin';
-    });
-  }
-
   async logout() {
     await this.service.logout();
-    this.viewMode.set('login');
+    this.navigateTo('/');
+    this.viewMode.set('display');
     this.showControls.set(true);
-    this.clearHideControlsTimer();
+    this.startHideControlsTimer();
   }
 
   get isAuthenticated() {
