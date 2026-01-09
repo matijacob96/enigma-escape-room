@@ -1,16 +1,22 @@
 import { getSupabaseClient, extractToken, corsHeaders } from '../_lib/supabase.js';
 
 export default async function handler(req, res) {
-  if (req.method === 'OPTIONS') {
-    return res.status(200).json({});
-  }
-
+  // Set CORS headers for all requests
   Object.entries(corsHeaders).forEach(([key, value]) => {
     res.setHeader(key, value);
   });
 
+  if (req.method === 'OPTIONS') {
+    return res.status(200).end();
+  }
+
   const { id } = req.query;
   const token = extractToken(req);
+  
+  if (!token && (req.method === 'PUT' || req.method === 'DELETE')) {
+    return res.status(401).json({ error: 'No autorizado - Token requerido' });
+  }
+  
   const client = getSupabaseClient(token);
 
   // PUT - Actualizar sala
@@ -31,14 +37,15 @@ export default async function handler(req, res) {
 
       if (error) throw error;
 
-      return res.json({
+      return res.status(200).json({
         id: data.id,
         name: data.name,
         image: data.image,
         themeColor: data.theme_color
       });
     } catch (error) {
-      return res.status(400).json({ error: error.message });
+      console.error('Error updating room:', error);
+      return res.status(400).json({ error: error.message || 'Error al actualizar' });
     }
   }
 
@@ -52,9 +59,10 @@ export default async function handler(req, res) {
 
       if (error) throw error;
 
-      return res.json({ message: 'Sala eliminada correctamente' });
+      return res.status(200).json({ success: true, message: 'Sala eliminada correctamente' });
     } catch (error) {
-      return res.status(400).json({ error: error.message });
+      console.error('Error deleting room:', error);
+      return res.status(400).json({ error: error.message || 'Error al eliminar' });
     }
   }
 
