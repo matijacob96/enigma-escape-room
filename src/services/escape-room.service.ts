@@ -5,6 +5,7 @@ export interface Room {
   name: string;
   accentColor: string;  // Color hex para títulos y números
   image: string;
+  displayOrder: number; // Orden en que se muestran las slides
 }
 
 export interface GameRecord {
@@ -235,6 +236,8 @@ export class EscapeRoomService {
       const response = await fetch(`${API_URL}/rooms`);
       if (response.ok) {
         const rooms = await response.json();
+        // Ordenar por displayOrder
+        rooms.sort((a: Room, b: Room) => (a.displayOrder || 0) - (b.displayOrder || 0));
         this.roomsSignal.set(rooms);
       }
     } catch (error) {
@@ -282,11 +285,13 @@ export class EscapeRoomService {
       this.errorSignal.set(error.message);
       // Fallback local si no hay backend
       if (error.message.includes('fetch')) {
+        const currentRooms = this.roomsSignal();
         const newRoom: Room = {
           id: crypto.randomUUID(),
           name,
           image,
-          accentColor
+          accentColor,
+          displayOrder: currentRooms.length + 1
         };
         this.roomsSignal.update(rooms => [...rooms, newRoom]);
         return true;
@@ -322,6 +327,47 @@ export class EscapeRoomService {
         this.roomsSignal.update(rooms => 
           rooms.map(r => r.id === id ? { ...r, name, image, accentColor } : r)
         );
+        return true;
+      }
+      return false;
+    }
+  }
+
+  // Reorder rooms - updates displayOrder for all rooms
+  async reorderRooms(orderedIds: string[]): Promise<boolean> {
+    this.errorSignal.set(null);
+    
+    try {
+      const response = await fetch(`${API_URL}/rooms/reorder`, {
+        method: 'PUT',
+        headers: this.getAuthHeaders(),
+        body: JSON.stringify({ orderedIds })
+      });
+
+      if (!response.ok) {
+        const data = await response.json();
+        throw new Error(data.error || 'Error al reordenar salas');
+      }
+
+      // Update local state with new order
+      this.roomsSignal.update(rooms => {
+        return orderedIds.map((id, index) => {
+          const room = rooms.find(r => r.id === id);
+          return room ? { ...room, displayOrder: index + 1 } : null;
+        }).filter(Boolean) as Room[];
+      });
+      
+      return true;
+    } catch (error: any) {
+      this.errorSignal.set(error.message);
+      // Fallback local
+      if (error.message.includes('fetch')) {
+        this.roomsSignal.update(rooms => {
+          return orderedIds.map((id, index) => {
+            const room = rooms.find(r => r.id === id);
+            return room ? { ...room, displayOrder: index + 1 } : null;
+          }).filter(Boolean) as Room[];
+        });
         return true;
       }
       return false;
@@ -441,19 +487,22 @@ export class EscapeRoomService {
         id: 'room-1', 
         name: 'La Mansión Embrujada', 
         accentColor: '#9933ff',
-        image: 'https://picsum.photos/id/1036/800/600'
+        image: 'https://picsum.photos/id/1036/800/600',
+        displayOrder: 1
       },
       { 
         id: 'room-2', 
         name: 'El Robo al Banco', 
         accentColor: '#02f700',
-        image: 'https://picsum.photos/id/1076/800/600'
+        image: 'https://picsum.photos/id/1076/800/600',
+        displayOrder: 2
       },
       { 
         id: 'room-3', 
         name: 'Laboratorio Alien', 
         accentColor: '#00d4ff',
-        image: 'https://picsum.photos/id/1026/800/600'
+        image: 'https://picsum.photos/id/1026/800/600',
+        displayOrder: 3
       }
     ];
     this.roomsSignal.set(demoRooms);

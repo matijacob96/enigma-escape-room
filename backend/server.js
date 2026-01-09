@@ -157,6 +157,7 @@ app.get('/api/rooms', async (req, res) => {
     const { data, error } = await supabase
       .from('rooms')
       .select('*')
+      .order('display_order', { ascending: true, nullsFirst: false })
       .order('created_at', { ascending: true });
 
     if (error) throw error;
@@ -166,7 +167,8 @@ app.get('/api/rooms', async (req, res) => {
       id: room.id,
       name: room.name,
       image: room.image,
-      themeColor: room.theme_color
+      accentColor: room.accent_color || room.theme_color || '#02f700',
+      displayOrder: room.display_order || 0
     }));
 
     res.json(rooms);
@@ -178,15 +180,25 @@ app.get('/api/rooms', async (req, res) => {
 // Crear sala (requiere autenticación)
 app.post('/api/rooms', async (req, res) => {
   try {
-    const { name, image, themeColor } = req.body;
+    const { name, image, accentColor } = req.body;
     const client = getSupabaseClient(req.token);
+    
+    // Get max display_order
+    const { data: maxOrderData } = await client
+      .from('rooms')
+      .select('display_order')
+      .order('display_order', { ascending: false })
+      .limit(1);
+    
+    const nextOrder = (maxOrderData?.[0]?.display_order || 0) + 1;
     
     const { data, error } = await client
       .from('rooms')
       .insert([{ 
         name, 
         image, 
-        theme_color: themeColor || 'purple' 
+        accent_color: accentColor || '#02f700',
+        display_order: nextOrder
       }])
       .select()
       .single();
@@ -197,8 +209,35 @@ app.post('/api/rooms', async (req, res) => {
       id: data.id,
       name: data.name,
       image: data.image,
-      themeColor: data.theme_color
+      accentColor: data.accent_color,
+      displayOrder: data.display_order
     });
+  } catch (error) {
+    res.status(400).json({ error: error.message });
+  }
+});
+
+// Reordenar salas (requiere autenticación)
+app.put('/api/rooms/reorder', async (req, res) => {
+  try {
+    const { orderedIds } = req.body;
+    const client = getSupabaseClient(req.token);
+    
+    if (!Array.isArray(orderedIds) || orderedIds.length === 0) {
+      return res.status(400).json({ error: 'orderedIds debe ser un array no vacío' });
+    }
+
+    // Update each room's display_order
+    for (let i = 0; i < orderedIds.length; i++) {
+      const { error } = await client
+        .from('rooms')
+        .update({ display_order: i + 1 })
+        .eq('id', orderedIds[i]);
+      
+      if (error) throw error;
+    }
+
+    res.json({ success: true, message: 'Orden actualizado' });
   } catch (error) {
     res.status(400).json({ error: error.message });
   }
@@ -208,7 +247,7 @@ app.post('/api/rooms', async (req, res) => {
 app.put('/api/rooms/:id', async (req, res) => {
   try {
     const { id } = req.params;
-    const { name, image, themeColor } = req.body;
+    const { name, image, accentColor } = req.body;
     const client = getSupabaseClient(req.token);
     
     const { data, error } = await client
@@ -216,7 +255,7 @@ app.put('/api/rooms/:id', async (req, res) => {
       .update({ 
         name, 
         image, 
-        theme_color: themeColor 
+        accent_color: accentColor 
       })
       .eq('id', id)
       .select()
@@ -228,7 +267,7 @@ app.put('/api/rooms/:id', async (req, res) => {
       id: data.id,
       name: data.name,
       image: data.image,
-      themeColor: data.theme_color
+      accentColor: data.accent_color
     });
   } catch (error) {
     res.status(400).json({ error: error.message });

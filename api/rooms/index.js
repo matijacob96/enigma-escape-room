@@ -15,6 +15,7 @@ export default async function handler(req, res) {
       const { data, error } = await supabase
         .from('rooms')
         .select('*')
+        .order('display_order', { ascending: true, nullsFirst: false })
         .order('created_at', { ascending: true });
 
       if (error) throw error;
@@ -23,7 +24,8 @@ export default async function handler(req, res) {
         id: room.id,
         name: room.name,
         image: room.image,
-        accentColor: room.accent_color || room.theme_color || '#02f700'
+        accentColor: room.accent_color || room.theme_color || '#02f700',
+        displayOrder: room.display_order || 0
       }));
 
       return res.json(rooms);
@@ -39,12 +41,22 @@ export default async function handler(req, res) {
       const token = extractToken(req);
       const client = getSupabaseClient(token);
       
+      // Get max display_order
+      const { data: maxOrderData } = await client
+        .from('rooms')
+        .select('display_order')
+        .order('display_order', { ascending: false })
+        .limit(1);
+      
+      const nextOrder = (maxOrderData?.[0]?.display_order || 0) + 1;
+      
       const { data, error } = await client
         .from('rooms')
         .insert([{ 
           name, 
           image, 
-          accent_color: accentColor || '#02f700' 
+          accent_color: accentColor || '#02f700',
+          display_order: nextOrder
         }])
         .select()
         .single();
@@ -55,7 +67,8 @@ export default async function handler(req, res) {
         id: data.id,
         name: data.name,
         image: data.image,
-        accentColor: data.accent_color
+        accentColor: data.accent_color,
+        displayOrder: data.display_order
       });
     } catch (error) {
       return res.status(400).json({ error: error.message });

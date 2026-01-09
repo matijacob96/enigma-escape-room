@@ -296,23 +296,41 @@ type Tab = 'records' | 'rooms';
                 </form>
              </div>
 
-             <!-- List Existing Rooms -->
+             <!-- List Existing Rooms with Drag & Drop -->
              <div class="border border-gray-800 bg-gray-900/30 p-6">
-                <h3 class="text-xl font-bold mb-6 text-white flex items-center gap-3 border-b border-gray-800 pb-2">
+                <h3 class="text-xl font-bold mb-4 text-white flex items-center gap-3 border-b border-gray-800 pb-2">
                   <span class="text-gray-500">></span> SALAS ACTIVAS ({{ rooms().length }})
                 </h3>
+                <p class="text-xs text-gray-500 mb-4 flex items-center gap-2">
+                  <span class="text-purple-400">↕</span> Arrastrá para cambiar el orden de las slides en TV
+                </p>
 
-                <div class="space-y-4 max-h-[500px] overflow-y-auto custom-scrollbar">
-                  @for (room of rooms(); track room.id) {
-                    <div class="bg-black border border-gray-700 p-3 group hover:border-gray-600 transition-colors">
+                <div class="space-y-2 max-h-[500px] overflow-y-auto custom-scrollbar">
+                  @for (room of rooms(); track room.id; let idx = $index) {
+                    <div 
+                      class="bg-black border border-gray-700 p-3 group hover:border-gray-600 transition-all cursor-grab active:cursor-grabbing"
+                      [class.border-purple-500]="dragOverIndex() === idx"
+                      [class.opacity-50]="draggingIndex() === idx"
+                      draggable="true"
+                      (dragstart)="onDragStart($event, idx)"
+                      (dragover)="onDragOver($event, idx)"
+                      (dragleave)="onDragLeave()"
+                      (drop)="onDrop($event, idx)"
+                      (dragend)="onDragEnd()"
+                    >
                        <div class="flex gap-4 items-center">
-                         <img [src]="room.image" class="w-16 h-16 object-cover border border-gray-800 bg-gray-800" alt="Room preview" (error)="onImageError($event)">
+                         <!-- Drag Handle -->
+                         <div class="text-gray-600 hover:text-purple-400 transition-colors flex flex-col items-center">
+                           <span class="text-xs font-mono text-gray-500">{{ idx + 1 }}</span>
+                           <span class="text-lg leading-none">⋮⋮</span>
+                         </div>
+                         <img [src]="room.image" class="w-14 h-14 object-cover border border-gray-800 bg-gray-800" alt="Room preview" (error)="onImageError($event)">
                          <div class="flex-1 min-w-0">
                             <div class="flex items-center gap-2">
                               <div class="w-4 h-4 rounded-full border border-gray-600" [style.background]="room.accentColor"></div>
                               <div class="text-white font-bold text-lg truncate">{{ room.name }}</div>
                             </div>
-                            <div class="text-xs text-gray-500 font-mono">ID: {{ room.id.slice(0,8) }}...</div>
+                            <div class="text-xs text-gray-500 font-mono">Slide #{{ idx + 1 }}</div>
                          </div>
                          <div class="flex gap-2">
                            <button 
@@ -438,6 +456,10 @@ export class BackofficeComponent {
   isSubmitting = signal(false);
   deletingId = signal<string | null>(null);
   editingRoomId = signal<string | null>(null);
+  
+  // Drag and drop state
+  draggingIndex = signal<number | null>(null);
+  dragOverIndex = signal<number | null>(null);
   
   // Record Form
   recordForm: FormGroup = this.fb.group({
@@ -593,5 +615,57 @@ export class BackofficeComponent {
         this.isSubmitting.set(false);
       }
     }
+  }
+
+  // ==================== DRAG AND DROP ====================
+  
+  onDragStart(event: DragEvent, index: number) {
+    this.draggingIndex.set(index);
+    if (event.dataTransfer) {
+      event.dataTransfer.effectAllowed = 'move';
+      event.dataTransfer.setData('text/plain', index.toString());
+    }
+  }
+
+  onDragOver(event: DragEvent, index: number) {
+    event.preventDefault();
+    if (event.dataTransfer) {
+      event.dataTransfer.dropEffect = 'move';
+    }
+    if (this.draggingIndex() !== index) {
+      this.dragOverIndex.set(index);
+    }
+  }
+
+  onDragLeave() {
+    this.dragOverIndex.set(null);
+  }
+
+  onDragEnd() {
+    this.draggingIndex.set(null);
+    this.dragOverIndex.set(null);
+  }
+
+  async onDrop(event: DragEvent, dropIndex: number) {
+    event.preventDefault();
+    const dragIndex = this.draggingIndex();
+    
+    if (dragIndex === null || dragIndex === dropIndex) {
+      this.onDragEnd();
+      return;
+    }
+
+    // Reorder the rooms array
+    const currentRooms = [...this.rooms()];
+    const [draggedRoom] = currentRooms.splice(dragIndex, 1);
+    currentRooms.splice(dropIndex, 0, draggedRoom);
+
+    // Get new ordered IDs
+    const orderedIds = currentRooms.map(r => r.id);
+
+    // Save to backend
+    await this.service.reorderRooms(orderedIds);
+    
+    this.onDragEnd();
   }
 }
