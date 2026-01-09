@@ -22,14 +22,14 @@ export default async function handler(req, res) {
   // PUT - Actualizar sala
   if (req.method === 'PUT') {
     try {
-      const { name, image, themeColor } = req.body;
+      const { name, image, accentColor } = req.body;
       
       const { data, error } = await client
         .from('rooms')
         .update({ 
           name, 
           image, 
-          theme_color: themeColor 
+          accent_color: accentColor 
         })
         .eq('id', id)
         .select()
@@ -41,7 +41,7 @@ export default async function handler(req, res) {
         id: data.id,
         name: data.name,
         image: data.image,
-        themeColor: data.theme_color
+        accentColor: data.accent_color
       });
     } catch (error) {
       console.error('Error updating room:', error);

@@ -295,6 +295,39 @@ export class EscapeRoomService {
     }
   }
 
+  async updateRoom(id: string, name: string, image: string, accentColor: string): Promise<boolean> {
+    this.errorSignal.set(null);
+    
+    try {
+      const response = await fetch(`${API_URL}/rooms/${id}`, {
+        method: 'PUT',
+        headers: this.getAuthHeaders(),
+        body: JSON.stringify({ name, image, accentColor })
+      });
+
+      const data = await response.json();
+
+      if (!response.ok) {
+        throw new Error(data.error || 'Error al actualizar sala');
+      }
+
+      this.roomsSignal.update(rooms => 
+        rooms.map(r => r.id === id ? { ...r, name, image, accentColor } : r)
+      );
+      return true;
+    } catch (error: any) {
+      this.errorSignal.set(error.message);
+      // Fallback local
+      if (error.message.includes('fetch')) {
+        this.roomsSignal.update(rooms => 
+          rooms.map(r => r.id === id ? { ...r, name, image, accentColor } : r)
+        );
+        return true;
+      }
+      return false;
+    }
+  }
+
   async deleteRoom(id: string): Promise<boolean> {
     this.errorSignal.set(null);
     

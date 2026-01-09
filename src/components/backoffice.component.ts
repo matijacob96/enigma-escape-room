@@ -79,12 +79,16 @@ type Tab = 'records' | 'rooms';
                  </div>
               } @else {
                 <form [formGroup]="recordForm" (ngSubmit)="onSubmitRecord()" class="space-y-6">
-                  <!-- Team Name -->
+                  <!-- Team Name (max 80 chars) -->
                   <div class="group">
-                    <label class="block text-xs font-bold text-[#02f700] mb-2 uppercase tracking-wider">Nombre del Equipo</label>
+                    <label class="block text-xs font-bold text-[#02f700] mb-2 uppercase tracking-wider">
+                      Nombre del Equipo 
+                      <span class="text-gray-500 font-normal">({{ recordForm.get('teamName')?.value?.length || 0 }}/80)</span>
+                    </label>
                     <input 
                       type="text" 
                       formControlName="teamName"
+                      maxlength="80"
                       class="w-full bg-gray-900/50 border border-gray-700 text-white p-4 focus:border-[#02f700] focus:ring-1 focus:ring-[#02f700] focus:outline-none transition-all placeholder-gray-600 text-lg uppercase"
                       placeholder="EJ: LOS VENGADORES"
                     />
@@ -251,25 +255,25 @@ type Tab = 'records' | 'rooms';
                     <p class="text-gray-500 text-xs mt-1">Usa https://picsum.photos/800/600 para pruebas</p>
                   </div>
 
-                  <!-- Color Selector -->
+                  <!-- Color Picker -->
                   <div>
                     <label class="block text-xs font-bold text-purple-400 mb-2 uppercase tracking-wider">Color de Acento</label>
-                    <div class="grid grid-cols-6 gap-2">
-                      @for (color of availableColors; track color.value) {
-                        <button 
-                          type="button"
-                          (click)="selectColor(color.value)"
-                          class="w-full aspect-square rounded-lg border-2 transition-all hover:scale-110"
-                          [style.background]="color.hex"
-                          [class.border-white]="roomForm.get('accentColor')?.value === color.value"
-                          [class.border-transparent]="roomForm.get('accentColor')?.value !== color.value"
-                          [class.ring-2]="roomForm.get('accentColor')?.value === color.value"
-                          [class.ring-white]="roomForm.get('accentColor')?.value === color.value"
-                          [title]="color.name"
-                        ></button>
-                      }
+                    <div class="flex items-center gap-4">
+                      <input 
+                        type="color" 
+                        formControlName="accentColor"
+                        class="w-16 h-16 cursor-pointer border-2 border-gray-700 rounded-lg bg-transparent"
+                      />
+                      <div class="flex-1">
+                        <input 
+                          type="text" 
+                          formControlName="accentColor"
+                          class="w-full bg-gray-900/50 border border-gray-700 text-white p-3 focus:border-purple-500 focus:outline-none font-mono text-sm uppercase"
+                          placeholder="#02f700"
+                        />
+                        <p class="text-gray-500 text-xs mt-1">Este color se usará para títulos y números en el display</p>
+                      </div>
                     </div>
-                    <p class="text-gray-500 text-xs mt-2">Este color se usará para los títulos y números en el display</p>
                   </div>
 
                   <button 
@@ -300,25 +304,95 @@ type Tab = 'records' | 'rooms';
 
                 <div class="space-y-4 max-h-[500px] overflow-y-auto custom-scrollbar">
                   @for (room of rooms(); track room.id) {
-                    <div class="flex bg-black border border-gray-700 p-2 gap-4 items-center group hover:border-gray-600 transition-colors">
-                       <img [src]="room.image" class="w-16 h-16 object-cover border border-gray-800 bg-gray-800" alt="Room preview" (error)="onImageError($event)">
-                       <div class="flex-1 min-w-0">
-                          <div class="text-white font-bold text-lg truncate">{{ room.name }}</div>
-                          <div class="text-xs text-gray-500 font-mono">ID: {{ room.id.slice(0,8) }}...</div>
+                    <div class="bg-black border border-gray-700 p-3 group hover:border-gray-600 transition-colors">
+                       <div class="flex gap-4 items-center">
+                         <img [src]="room.image" class="w-16 h-16 object-cover border border-gray-800 bg-gray-800" alt="Room preview" (error)="onImageError($event)">
+                         <div class="flex-1 min-w-0">
+                            <div class="flex items-center gap-2">
+                              <div class="w-4 h-4 rounded-full border border-gray-600" [style.background]="room.accentColor"></div>
+                              <div class="text-white font-bold text-lg truncate">{{ room.name }}</div>
+                            </div>
+                            <div class="text-xs text-gray-500 font-mono">ID: {{ room.id.slice(0,8) }}...</div>
+                         </div>
+                         <div class="flex gap-2">
+                           <button 
+                             (click)="startEditRoom(room)"
+                             class="px-3 py-2 text-purple-400 border border-purple-900 hover:bg-purple-900/20 text-xs uppercase font-bold transition-all"
+                           >
+                             Editar
+                           </button>
+                           <button 
+                             (click)="deleteRoom(room.id)"
+                             [disabled]="deletingId() === room.id"
+                             class="px-3 py-2 text-red-500 border border-red-900 hover:bg-red-900/20 text-xs uppercase font-bold transition-all disabled:opacity-50 flex items-center gap-2"
+                           >
+                             @if (deletingId() === room.id) {
+                               <svg class="animate-spin h-4 w-4" viewBox="0 0 24 24">
+                                 <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4" fill="none"></circle>
+                                 <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z"></path>
+                               </svg>
+                             }
+                             Borrar
+                           </button>
+                         </div>
                        </div>
-                       <button 
-                         (click)="deleteRoom(room.id)"
-                         [disabled]="deletingId() === room.id"
-                         class="px-4 py-2 text-red-500 border border-red-900 hover:bg-red-900/20 text-xs uppercase font-bold transition-all mr-2 disabled:opacity-50 flex items-center gap-2"
-                       >
-                         @if (deletingId() === room.id) {
-                           <svg class="animate-spin h-4 w-4" viewBox="0 0 24 24">
-                             <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4" fill="none"></circle>
-                             <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z"></path>
-                           </svg>
-                         }
-                         Borrar
-                       </button>
+                       
+                       <!-- Edit Form (inline) -->
+                       @if (editingRoomId() === room.id) {
+                         <div class="mt-4 pt-4 border-t border-gray-800 fade-in">
+                           <form [formGroup]="editRoomForm" (ngSubmit)="onUpdateRoom()" class="space-y-4">
+                             <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                               <div>
+                                 <label class="block text-xs font-bold text-purple-400 mb-1 uppercase">Nombre</label>
+                                 <input 
+                                   type="text" 
+                                   formControlName="name"
+                                   class="w-full bg-gray-900/50 border border-gray-700 text-white p-3 focus:border-purple-500 focus:outline-none"
+                                 />
+                               </div>
+                               <div>
+                                 <label class="block text-xs font-bold text-purple-400 mb-1 uppercase">URL Imagen</label>
+                                 <input 
+                                   type="text" 
+                                   formControlName="image"
+                                   class="w-full bg-gray-900/50 border border-gray-700 text-white p-3 focus:border-purple-500 focus:outline-none font-mono text-xs"
+                                 />
+                               </div>
+                             </div>
+                             <div>
+                               <label class="block text-xs font-bold text-purple-400 mb-1 uppercase">Color de Acento</label>
+                               <div class="flex items-center gap-3">
+                                 <input 
+                                   type="color" 
+                                   formControlName="accentColor"
+                                   class="w-12 h-12 cursor-pointer border-2 border-gray-700 rounded bg-transparent"
+                                 />
+                                 <input 
+                                   type="text" 
+                                   formControlName="accentColor"
+                                   class="flex-1 bg-gray-900/50 border border-gray-700 text-white p-3 focus:border-purple-500 focus:outline-none font-mono text-sm uppercase"
+                                 />
+                               </div>
+                             </div>
+                             <div class="flex gap-2 justify-end">
+                               <button 
+                                 type="button"
+                                 (click)="cancelEditRoom()"
+                                 class="px-4 py-2 text-gray-400 border border-gray-700 hover:bg-gray-800 text-xs uppercase font-bold"
+                               >
+                                 Cancelar
+                               </button>
+                               <button 
+                                 type="submit"
+                                 [disabled]="editRoomForm.invalid || isSubmitting()"
+                                 class="px-4 py-2 bg-purple-600 hover:bg-purple-500 disabled:bg-gray-800 text-white text-xs uppercase font-bold"
+                               >
+                                 Guardar Cambios
+                               </button>
+                             </div>
+                           </form>
+                         </div>
+                       }
                     </div>
                   } @empty {
                     <div class="text-center py-10 text-gray-500">
@@ -363,40 +437,60 @@ export class BackofficeComponent {
   successMessage = signal(false);
   isSubmitting = signal(false);
   deletingId = signal<string | null>(null);
+  editingRoomId = signal<string | null>(null);
   
   // Record Form
   recordForm: FormGroup = this.fb.group({
-    teamName: ['', Validators.required],
+    teamName: ['', [Validators.required, Validators.maxLength(80)]],
     roomId: ['', Validators.required],
     minutes: [45, [Validators.required, Validators.min(0)]],
     seconds: [0, [Validators.required, Validators.min(0), Validators.max(59)]]
   });
 
-  // Room Form
+  // Room Form (create)
   roomForm: FormGroup = this.fb.group({
     name: ['', Validators.required],
     image: ['https://picsum.photos/seed/escape/800/600', Validators.required],
     accentColor: ['#02f700', Validators.required]
   });
 
-  // Available Colors for rooms
-  availableColors = [
-    { name: 'Verde Neón', value: '#02f700', hex: '#02f700' },
-    { name: 'Cian', value: '#00d4ff', hex: '#00d4ff' },
-    { name: 'Magenta', value: '#ff00ff', hex: '#ff00ff' },
-    { name: 'Naranja', value: '#ff6600', hex: '#ff6600' },
-    { name: 'Amarillo', value: '#ffcc00', hex: '#ffcc00' },
-    { name: 'Rojo', value: '#ff3333', hex: '#ff3333' },
-    { name: 'Rosa', value: '#ff66b2', hex: '#ff66b2' },
-    { name: 'Púrpura', value: '#9933ff', hex: '#9933ff' },
-    { name: 'Azul', value: '#3366ff', hex: '#3366ff' },
-    { name: 'Turquesa', value: '#00ffcc', hex: '#00ffcc' },
-    { name: 'Lima', value: '#ccff00', hex: '#ccff00' },
-    { name: 'Blanco', value: '#ffffff', hex: '#ffffff' }
-  ];
+  // Room Form (edit)
+  editRoomForm: FormGroup = this.fb.group({
+    name: ['', Validators.required],
+    image: ['', Validators.required],
+    accentColor: ['#02f700', Validators.required]
+  });
 
-  selectColor(color: string) {
-    this.roomForm.patchValue({ accentColor: color });
+  startEditRoom(room: Room) {
+    this.editingRoomId.set(room.id);
+    this.editRoomForm.patchValue({
+      name: room.name,
+      image: room.image,
+      accentColor: room.accentColor || '#02f700'
+    });
+  }
+
+  cancelEditRoom() {
+    this.editingRoomId.set(null);
+    this.editRoomForm.reset();
+  }
+
+  async onUpdateRoom() {
+    if (this.editRoomForm.valid && this.editingRoomId()) {
+      this.isSubmitting.set(true);
+      
+      try {
+        const { name, image, accentColor } = this.editRoomForm.value;
+        const success = await this.service.updateRoom(this.editingRoomId()!, name, image, accentColor);
+        
+        if (success) {
+          this.editingRoomId.set(null);
+          this.editRoomForm.reset();
+        }
+      } finally {
+        this.isSubmitting.set(false);
+      }
+    }
   }
 
   get rooms() {

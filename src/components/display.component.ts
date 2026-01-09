@@ -46,20 +46,23 @@ import { EscapeRoomService } from '../services/escape-room.service';
               
               <!-- Left Sidebar: Room Info (Hidden on very small screens) -->
               <div class="room-sidebar" [style.border-right-color]="room.accentColor + '4D'">
-                 <!-- Image Background with REDUCED Overlay -->
+                 <!-- Image Background - Full visibility -->
                  <div class="absolute inset-0 z-0">
-                    <img [src]="room.image" class="w-full h-full object-cover opacity-60" alt="">
-                    <div class="absolute inset-0 bg-gradient-to-t from-black/80 via-black/30 to-transparent"></div>
+                    <img [src]="room.image" class="w-full h-full object-cover" alt="">
                  </div>
 
-                 <!-- Room Title - CONTAINED within sidebar -->
-                 <div class="relative z-10 p-responsive h-full flex flex-col justify-end pb-responsive overflow-hidden">
-                    <div class="room-label" [style.color]="room.accentColor" [style.border-left-color]="room.accentColor">
-                      Sala actual
+                 <!-- Room Title with LOCAL overlay only at bottom -->
+                 <div class="relative z-10 h-full flex flex-col justify-end">
+                    <div class="room-title-container" [style.background]="'linear-gradient(to top, rgba(0,0,0,0.95) 0%, rgba(0,0,0,0.7) 70%, transparent 100%)'">
+                      <div class="room-label" [style.color]="room.accentColor" [style.border-left-color]="room.accentColor">
+                        Sala actual
+                      </div>
+                      <h2 class="room-title" 
+                          [style.text-shadow]="'0 0 20px ' + room.accentColor + '80'"
+                          [style.font-size]="getRoomTitleSize(room.name)">
+                        {{ room.name }}
+                      </h2>
                     </div>
-                    <h2 class="room-title" [style.text-shadow]="'0 0 20px ' + room.accentColor + '80'">
-                      {{ room.name }}
-                    </h2>
                  </div>
               </div>
 
@@ -89,9 +92,12 @@ import { EscapeRoomService } from '../services/escape-room.service';
                          RÉCORD #1
                        </div>
                        
-                       <!-- Team Name - WITH WRAP TEXT -->
-                       <div class="top1-team" [style.color]="room.accentColor" [style.text-shadow]="'0 0 20px ' + room.accentColor + '80'">
-                         {{ truncateText(topRecords[0].teamName, 25) }}
+                       <!-- Team Name - FULL TEXT with adaptive font size -->
+                       <div class="top1-team" 
+                            [style.color]="room.accentColor" 
+                            [style.text-shadow]="'0 0 20px ' + room.accentColor + '80'"
+                            [style.font-size]="getTop1FontSize(topRecords[0].teamName)">
+                         {{ topRecords[0].teamName }}
                        </div>
                        
                        <!-- Time -->
@@ -114,7 +120,9 @@ import { EscapeRoomService } from '../services/escape-room.service';
                              <div class="record-position" [style.color]="room.accentColor">
                                {{ (i + 2).toString().padStart(2, '0') }}
                              </div>
-                             <div class="record-team">{{ truncateText(record.teamName, 18) }}</div>
+                             <div class="record-team" [style.font-size]="getRecordFontSize(record.teamName)">
+                               {{ record.teamName }}
+                             </div>
                           </div>
                           <div class="record-time" [style.color]="room.accentColor">
                             {{ formatTime(record.timeInSeconds) }}
@@ -187,6 +195,11 @@ import { EscapeRoomService } from '../services/escape-room.service';
       padding-bottom: clamp(40px, 5vw, 80px);
     }
 
+    .room-title-container {
+      padding: clamp(24px, 3vw, 48px);
+      padding-top: clamp(48px, 6vw, 96px);
+    }
+
     .room-label {
       color: #02f700;
       font-size: clamp(10px, 1vw, 14px);
@@ -199,16 +212,16 @@ import { EscapeRoomService } from '../services/escape-room.service';
     }
 
     .room-title {
-      font-size: clamp(24px, 3vw, 60px);
       font-weight: 900;
       color: white;
       text-transform: uppercase;
       line-height: 1.1;
       font-family: 'Orbitron', sans-serif;
       text-shadow: 2px 2px 4px rgba(0,0,0,0.8);
-      word-break: break-word;
-      overflow-wrap: break-word;
-      max-width: 100%;
+      /* NO word-break - font adapts to fit */
+      white-space: normal;
+      overflow-wrap: normal;
+      word-break: normal;
     }
 
     /* Leaderboard Main */
@@ -287,15 +300,17 @@ import { EscapeRoomService } from '../services/escape-room.service';
 
     .top1-team {
       color: #02f700;
-      font-size: clamp(32px, 6vw, 100px);
+      /* font-size is set dynamically via getTop1FontSize() */
       font-weight: 900;
       text-transform: uppercase;
       letter-spacing: -0.02em;
       font-family: 'Orbitron', sans-serif;
-      line-height: 1;
+      line-height: 1.1;
       margin-bottom: clamp(8px, 1vw, 16px);
       text-shadow: 0 0 20px rgba(2, 247, 0, 0.5);
-      word-break: break-word;
+      /* Allow text to wrap naturally without breaking words */
+      word-break: normal;
+      overflow-wrap: break-word;
     }
 
     .top1-time-container {
@@ -368,10 +383,12 @@ import { EscapeRoomService } from '../services/escape-room.service';
     .record-team {
       color: white;
       font-weight: bold;
-      font-size: clamp(12px, 1.3vw, 22px);
+      /* font-size is set dynamically via getRecordFontSize() */
       text-transform: uppercase;
       line-height: 1.2;
-      word-break: break-word;
+      /* Show full text, wrap if needed */
+      word-break: normal;
+      overflow-wrap: break-word;
       flex: 1;
       min-width: 0;
     }
@@ -557,9 +574,47 @@ export class DisplayComponent implements OnInit, OnDestroy {
     return d.toLocaleDateString();
   }
 
-  truncateText(text: string, maxLength: number): string {
-    if (!text) return '';
-    if (text.length <= maxLength) return text;
-    return text.substring(0, maxLength).trim() + '...';
+  // Adaptive font size for TOP 1 team name - shows FULL text
+  getTop1FontSize(teamName: string): string {
+    if (!teamName) return 'clamp(32px, 6vw, 100px)';
+    const len = teamName.length;
+    
+    // Más caracteres = font más pequeño, pero siempre visible
+    if (len <= 10) return 'clamp(40px, 8vw, 120px)';
+    if (len <= 15) return 'clamp(36px, 7vw, 100px)';
+    if (len <= 20) return 'clamp(32px, 6vw, 80px)';
+    if (len <= 30) return 'clamp(28px, 5vw, 60px)';
+    if (len <= 40) return 'clamp(24px, 4vw, 50px)';
+    if (len <= 50) return 'clamp(20px, 3.5vw, 40px)';
+    if (len <= 60) return 'clamp(18px, 3vw, 36px)';
+    return 'clamp(16px, 2.5vw, 32px)'; // 60-80 chars
+  }
+
+  // Adaptive font size for records 2-10 - shows FULL text
+  getRecordFontSize(teamName: string): string {
+    if (!teamName) return 'clamp(12px, 1.3vw, 22px)';
+    const len = teamName.length;
+    
+    if (len <= 15) return 'clamp(14px, 1.5vw, 24px)';
+    if (len <= 25) return 'clamp(12px, 1.3vw, 20px)';
+    if (len <= 35) return 'clamp(11px, 1.2vw, 18px)';
+    if (len <= 50) return 'clamp(10px, 1.1vw, 16px)';
+    return 'clamp(9px, 1vw, 14px)'; // 50-80 chars
+  }
+
+  // Adaptive font size for room title - no word breaking
+  getRoomTitleSize(roomName: string): string {
+    if (!roomName) return 'clamp(24px, 3vw, 60px)';
+    
+    // Find the longest word
+    const longestWord = roomName.split(/\s+/).reduce((a, b) => a.length > b.length ? a : b, '');
+    const len = longestWord.length;
+    
+    // Adapt based on longest word to prevent overflow
+    if (len <= 6) return 'clamp(28px, 4vw, 70px)';
+    if (len <= 10) return 'clamp(24px, 3vw, 55px)';
+    if (len <= 14) return 'clamp(20px, 2.5vw, 45px)';
+    if (len <= 18) return 'clamp(18px, 2vw, 38px)';
+    return 'clamp(16px, 1.8vw, 32px)'; // very long words
   }
 }
