@@ -1,9 +1,7 @@
-import { Component, inject, signal, output } from '@angular/core';
+import { Component, inject, output } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { ReactiveFormsModule, FormBuilder, Validators, FormGroup } from '@angular/forms';
 import { EscapeRoomService } from '../services/escape-room.service';
-
-type AuthMode = 'login' | 'signup';
 
 @Component({
   selector: 'app-login',
@@ -35,7 +33,7 @@ type AuthMode = 'login' | 'signup';
           <p class="text-gray-500 text-sm tracking-wider uppercase">Sistema de Administración</p>
         </div>
 
-        <!-- Login/Signup Card -->
+        <!-- Login Card -->
         <div class="border border-[#02f700]/50 bg-black/80 p-8 relative neon-box">
           <!-- Corner Decorations -->
           <div class="absolute top-0 left-0 w-3 h-3 border-l-2 border-t-2 border-[#02f700]"></div>
@@ -43,28 +41,11 @@ type AuthMode = 'login' | 'signup';
           <div class="absolute bottom-0 left-0 w-3 h-3 border-l-2 border-b-2 border-[#02f700]"></div>
           <div class="absolute bottom-0 right-0 w-3 h-3 border-r-2 border-b-2 border-[#02f700]"></div>
 
-          <!-- Tab Switcher -->
-          <div class="flex mb-8 border-b border-gray-800">
-            <button 
-              (click)="mode.set('login')"
-              class="flex-1 py-3 text-center font-bold uppercase tracking-wider text-sm transition-all border-b-2"
-              [class.border-[#02f700]]="mode() === 'login'"
-              [class.text-[#02f700]]="mode() === 'login'"
-              [class.border-transparent]="mode() !== 'login'"
-              [class.text-gray-500]="mode() !== 'login'"
-            >
+          <!-- Header -->
+          <div class="mb-8 border-b border-gray-800 pb-4">
+            <h3 class="text-center text-[#02f700] font-bold uppercase tracking-wider text-sm">
               Iniciar Sesión
-            </button>
-            <button 
-              (click)="mode.set('signup')"
-              class="flex-1 py-3 text-center font-bold uppercase tracking-wider text-sm transition-all border-b-2"
-              [class.border-[#02f700]]="mode() === 'signup'"
-              [class.text-[#02f700]]="mode() === 'signup'"
-              [class.border-transparent]="mode() !== 'signup'"
-              [class.text-gray-500]="mode() !== 'signup'"
-            >
-              Registrarse
-            </button>
+            </h3>
           </div>
 
           <!-- Form -->
@@ -96,32 +77,10 @@ type AuthMode = 'login' | 'signup';
               />
             </div>
 
-            @if (mode() === 'signup') {
-              <div>
-                <label class="block text-xs font-bold text-[#02f700] mb-2 uppercase tracking-wider">
-                  Confirmar Contraseña
-                </label>
-                <input 
-                  type="password" 
-                  formControlName="confirmPassword"
-                  class="w-full bg-gray-900/50 border border-gray-700 text-white p-4 focus:border-[#02f700] focus:ring-1 focus:ring-[#02f700] focus:outline-none transition-all placeholder-gray-600"
-                  placeholder="••••••••"
-                  autocomplete="new-password"
-                />
-              </div>
-            }
-
             <!-- Error Message -->
             @if (service.error()) {
               <div class="bg-red-900/30 border border-red-500 text-red-400 p-3 text-sm text-center">
                 {{ service.error() }}
-              </div>
-            }
-
-            <!-- Success Message -->
-            @if (successMessage()) {
-              <div class="bg-[#02f700]/10 border border-[#02f700] text-[#02f700] p-3 text-sm text-center">
-                {{ successMessage() }}
               </div>
             }
 
@@ -140,7 +99,7 @@ type AuthMode = 'login' | 'signup';
                   Procesando...
                 </span>
               } @else {
-                {{ mode() === 'login' ? 'Acceder' : 'Crear Cuenta' }}
+                Acceder
               }
             </button>
           </form>
@@ -179,9 +138,6 @@ export class LoginComponent {
   private fb = inject(FormBuilder);
   service = inject(EscapeRoomService);
   
-  mode = signal<AuthMode>('login');
-  successMessage = signal<string | null>(null);
-  
   // Output para notificar al padre que puede continuar
   loginSuccess = output<void>();
   guestMode = output<void>();
@@ -190,32 +146,16 @@ export class LoginComponent {
 
   authForm: FormGroup = this.fb.group({
     email: ['', [Validators.required, Validators.email]],
-    password: ['', [Validators.required, Validators.minLength(6)]],
-    confirmPassword: ['']
+    password: ['', [Validators.required, Validators.minLength(6)]]
   });
 
   async onSubmit() {
     if (this.authForm.invalid) return;
 
-    const { email, password, confirmPassword } = this.authForm.value;
-
-    if (this.mode() === 'signup') {
-      if (password !== confirmPassword) {
-        this.service['errorSignal'].set('Las contraseñas no coinciden');
-        return;
-      }
-
-      const success = await this.service.signup(email, password);
-      if (success) {
-        this.successMessage.set('¡Cuenta creada! Revisa tu email para verificar.');
-        this.mode.set('login');
-        this.authForm.patchValue({ password: '', confirmPassword: '' });
-      }
-    } else {
-      const success = await this.service.login(email, password);
-      if (success) {
-        this.loginSuccess.emit();
-      }
+    const { email, password } = this.authForm.value;
+    const success = await this.service.login(email, password);
+    if (success) {
+      this.loginSuccess.emit();
     }
   }
 
