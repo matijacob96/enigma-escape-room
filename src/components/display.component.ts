@@ -86,10 +86,7 @@ import { EscapeRoomService } from '../services/escape-room.service';
                     <!-- TOP 1 - MASSIVE DISPLAY -->
                     <div class="top1-container">
                        <div class="top1-badge" [style.color]="room.accentColor">
-                         <svg xmlns="http://www.w3.org/2000/svg" class="badge-icon" viewBox="0 0 20 20" fill="currentColor">
-                           <path fill-rule="evenodd" d="M10 2a1 1 0 011 1v1.323l3.954 1.582 1.699-3.181a1 1 0 011.827.954L17.18 7.519l2.58 4.73a1.002 1.002 0 01-.937 1.506h-3.228l-2.81 5.15a1 1 0 01-1.75 0l-2.81-5.15H4.938a1.002 1.002 0 01-.938-1.506l2.58-4.73L5.228 3.674a1 1 0 011.827-.954L8.754 5.905 12.708 4.323V3a1 1 0 011-1z" clip-rule="evenodd" />
-                         </svg>
-                         RÉCORD #1
+                          RECORD #1
                        </div>
                        
                        <!-- Team Name - FULL TEXT with adaptive font size -->
@@ -304,15 +301,13 @@ import { EscapeRoomService } from '../services/escape-room.service';
       text-transform: uppercase;
       letter-spacing: -0.02em;
       font-family: 'Orbitron', sans-serif;
-      line-height: 1.1;
+      line-height: 1;
       text-shadow: 0 0 20px rgba(2, 247, 0, 0.5);
-      /* Fixed height container - time always in same position */
-      height: clamp(40px, 6vw, 80px);
+      /* Single line with fixed height - time always in same position */
+      white-space: nowrap;
+      height: clamp(40px, 6vw, 90px);
       display: flex;
       align-items: center;
-      overflow: hidden;
-      word-break: normal;
-      overflow-wrap: break-word;
     }
 
     .top1-time-container {
@@ -356,11 +351,87 @@ import { EscapeRoomService } from '../services/escape-room.service';
       .records-grid {
         grid-template-columns: repeat(2, 1fr);
       }
+      
+      .top1-time {
+        font-size: clamp(60px, 12vw, 140px);
+      }
     }
     
-    @media (max-width: 500px) {
+    @media (max-width: 600px) {
+      .leaderboard-main {
+        padding: 12px;
+        justify-content: center; /* Center content vertically */
+      }
+      
       .records-grid {
         grid-template-columns: 1fr;
+        max-height: none;
+        margin-top: 12px; /* Space between TOP1 and list */
+        overflow-y: visible;
+      }
+      
+      .leaderboard-header {
+        margin-bottom: 6px;
+        padding-bottom: 4px;
+      }
+      
+      .header-title {
+        font-size: 12px;
+      }
+      
+      .header-subtitle {
+        font-size: 10px;
+      }
+      
+      .top1-container {
+        margin-bottom: 8px;
+      }
+      
+      .top1-badge {
+        margin-bottom: 2px;
+        font-size: 9px;
+      }
+      
+      .badge-icon {
+        width: 12px;
+        height: 12px;
+      }
+      
+      .top1-team {
+        margin-bottom: 4px;
+      }
+      
+      .top1-time {
+        font-size: 40px;
+      }
+      
+      .top1-time-container {
+        gap: 8px;
+        margin-bottom: 0;
+      }
+      
+      .top1-date {
+        font-size: 9px;
+        padding: 2px 5px;
+        margin-bottom: 4px;
+      }
+      
+      .record-item {
+        height: 34px;
+        padding: 4px 8px;
+      }
+      
+      .record-position {
+        font-size: 11px;
+        width: 18px;
+      }
+      
+      .record-team {
+        font-size: 9px !important;
+      }
+      
+      .record-time {
+        font-size: 12px;
       }
     }
 
@@ -602,20 +673,23 @@ export class DisplayComponent implements OnInit, OnDestroy {
     return d.toLocaleDateString();
   }
 
-  // Adaptive font size for TOP 1 team name - shows FULL text
+  // Adaptive font size for TOP 1 team name - SINGLE LINE, fits width
   getTop1FontSize(teamName: string): string {
-    if (!teamName) return 'clamp(32px, 6vw, 100px)';
+    if (!teamName) return 'clamp(24px, 5vw, 80px)';
     const len = teamName.length;
     
-    // Más caracteres = font más pequeño, pero siempre visible
-    if (len <= 10) return 'clamp(40px, 8vw, 120px)';
-    if (len <= 15) return 'clamp(36px, 7vw, 100px)';
-    if (len <= 20) return 'clamp(32px, 6vw, 80px)';
-    if (len <= 30) return 'clamp(28px, 5vw, 60px)';
-    if (len <= 40) return 'clamp(24px, 4vw, 50px)';
-    if (len <= 50) return 'clamp(20px, 3.5vw, 40px)';
-    if (len <= 60) return 'clamp(18px, 3vw, 36px)';
-    return 'clamp(16px, 2.5vw, 32px)'; // 60-80 chars
+    // Calculate based on ~50vw available width for the name
+    // Shorter names = bigger font, longer names = smaller font
+    if (len <= 8) return 'clamp(32px, 6vw, 100px)';
+    if (len <= 12) return 'clamp(28px, 5vw, 80px)';
+    if (len <= 16) return 'clamp(24px, 4.5vw, 70px)';
+    if (len <= 20) return 'clamp(22px, 4vw, 60px)';
+    if (len <= 25) return 'clamp(20px, 3.5vw, 50px)';
+    if (len <= 30) return 'clamp(18px, 3vw, 45px)';
+    if (len <= 40) return 'clamp(16px, 2.5vw, 36px)';
+    if (len <= 50) return 'clamp(14px, 2vw, 30px)';
+    if (len <= 60) return 'clamp(12px, 1.7vw, 26px)';
+    return 'clamp(10px, 1.4vw, 22px)'; // 60-80 chars
   }
 
   // Adaptive font size for records 2-10 - fits in 2 lines max (up to 80 chars)
