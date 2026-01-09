@@ -24,14 +24,7 @@ import { EscapeRoomService } from '../services/escape-room.service';
             <div class="matrix-bg"></div>
             
             <div class="z-10 text-center logo-container">
-              <div class="logo-box">
-                <h1 class="logo-title">
-                  ENIGMA
-                </h1>
-                <h2 class="logo-subtitle">
-                  SALAS DE ESCAPE
-                </h2>
-              </div>
+              <img src="assets/enigma-logo.svg" alt="ENIGMA Escape Room" class="enigma-logo" />
               <p class="logo-tagline">
                 ¿PODRÁS ESCAPAR?
               </p>
@@ -531,35 +524,22 @@ import { EscapeRoomService } from '../services/escape-room.service';
     }
 
     .logo-container {
-      transform: scale(clamp(0.5, 1vw * 0.1 + 0.5, 1.5));
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: clamp(16px, 3vw, 40px);
     }
 
-    .logo-box {
-      border: clamp(2px, 0.4vw, 4px) solid #02f700;
-      padding: clamp(24px, 4vw, 60px);
-      background: black;
-      box-shadow: 0 0 30px rgba(2, 247, 0, 0.5), inset 0 0 20px rgba(2, 247, 0, 0.2);
+    .enigma-logo {
+      width: clamp(200px, 40vw, 500px);
+      height: auto;
+      filter: drop-shadow(0 0 10px rgba(2, 247, 0, 0.5)) drop-shadow(0 0 20px rgba(2, 247, 0, 0.3));
+      animation: logoPulse 3s ease-in-out infinite;
     }
 
-    .logo-title {
-      font-size: clamp(48px, 12vw, 180px);
-      font-family: 'Orbitron', sans-serif;
-      font-weight: 900;
-      color: #02f700;
-      line-height: 1;
-      letter-spacing: -0.02em;
-      text-shadow: 0 0 20px #02f700, 0 0 40px #02f700;
-    }
-
-    .logo-subtitle {
-      font-size: clamp(16px, 3vw, 48px);
-      font-family: 'Orbitron', sans-serif;
-      font-weight: bold;
-      color: white;
-      line-height: 1;
-      letter-spacing: 0.2em;
-      margin-top: clamp(8px, 1vw, 16px);
-      opacity: 0.8;
+    @keyframes logoPulse {
+      0%, 100% { filter: drop-shadow(0 0 10px rgba(2, 247, 0, 0.5)) drop-shadow(0 0 20px rgba(2, 247, 0, 0.3)); }
+      50% { filter: drop-shadow(0 0 15px rgba(2, 247, 0, 0.7)) drop-shadow(0 0 30px rgba(2, 247, 0, 0.5)); }
     }
 
     .logo-tagline {
