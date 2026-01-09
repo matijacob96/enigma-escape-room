@@ -527,12 +527,17 @@ import { EscapeRoomService } from '../services/escape-room.service';
       display: flex;
       flex-direction: column;
       align-items: center;
-      gap: clamp(16px, 3vw, 40px);
+      justify-content: center;
+      gap: clamp(8px, 2vh, 24px);
+      max-height: 90vh; /* No se sale del viewport */
     }
 
     .enigma-logo {
-      width: clamp(200px, 40vw, 500px);
-      height: auto;
+      /* Proporcional al viewport: ocupa ~70% de la altura disponible */
+      height: 65vh;
+      width: auto;
+      max-width: 90vw; /* No se sale del ancho */
+      object-fit: contain;
       filter: drop-shadow(0 0 10px rgba(2, 247, 0, 0.5)) drop-shadow(0 0 20px rgba(2, 247, 0, 0.3));
       animation: logoPulse 3s ease-in-out infinite;
     }
@@ -543,9 +548,8 @@ import { EscapeRoomService } from '../services/escape-room.service';
     }
 
     .logo-tagline {
-      margin-top: clamp(16px, 3vw, 40px);
       color: #02f700;
-      font-size: clamp(14px, 2vw, 32px);
+      font-size: clamp(14px, 2.5vh, 32px);
       font-family: monospace;
       animation: pulse 2s ease-in-out infinite;
       letter-spacing: 0.5em;
