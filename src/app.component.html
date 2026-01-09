@@ -1,0 +1,71 @@
+<div class="h-screen w-screen relative bg-gray-900 text-white">
+  
+  <!-- Loading State -->
+  @if (isLoading()) {
+    <div class="h-full w-full flex items-center justify-center bg-black">
+      <div class="text-center">
+        <div class="text-6xl brand-font text-[#02f700] neon-text mb-4 animate-pulse">ENIGMA</div>
+        <div class="text-[#02f700]/70 text-sm tracking-widest uppercase">Cargando...</div>
+      </div>
+    </div>
+  } @else {
+    <!-- Content Area -->
+    @if (viewMode() === 'login') {
+      <app-login 
+        class="block h-full w-full" 
+        (loginSuccess)="onLoginSuccess()"
+        (guestMode)="onGuestMode()"
+      />
+    } @else if (viewMode() === 'admin') {
+      <app-backoffice class="block h-full w-full" />
+    } @else {
+      <app-display class="block h-full w-full" />
+    }
+  }
+
+  <!-- View Switcher (Fixed Position) - Only show when not on login -->
+  @if (viewMode() !== 'login') {
+    <div 
+      class="fixed bottom-4 right-4 z-50 flex gap-2 transition-all duration-500 ease-in-out"
+      [class.opacity-0]="!showControls() && viewMode() === 'display'"
+      [class.pointer-events-none]="!showControls() && viewMode() === 'display'"
+      [class.translate-y-4]="!showControls() && viewMode() === 'display'"
+      [class.opacity-30]="showControls() || viewMode() === 'admin'"
+      [class.hover:opacity-100]="showControls() || viewMode() === 'admin'"
+    >
+      
+      @if (isAuthenticated()) {
+        <button 
+          (click)="logout()" 
+          class="bg-red-900 border border-red-600 rounded-full p-2 text-xs text-red-400 hover:text-white hover:bg-red-800 shadow-lg transition-all"
+          title="Cerrar sesión"
+        >
+          <span>🚪 Salir</span>
+        </button>
+      }
+
+      <button 
+        (click)="toggleMode()" 
+        class="bg-gray-800 border border-gray-600 rounded-full p-2 text-xs text-gray-400 hover:text-white hover:bg-gray-700 shadow-lg transition-all"
+        title="Cambiar vista (Admin/TV)"
+      >
+        @if (viewMode() === 'admin') {
+          <span>📺 Ir a TV</span>
+        } @else {
+          @if (isAuthenticated()) {
+            <span>⚙️ Admin</span>
+          } @else {
+            <span>🔑 Login</span>
+          }
+        }
+      </button>
+    </div>
+  }
+
+  <!-- User Info Badge - Show when authenticated and in admin mode -->
+  @if (viewMode() === 'admin' && user()) {
+    <div class="fixed top-4 right-4 z-50 bg-black/80 border border-[#02f700]/30 rounded px-3 py-1 text-xs text-[#02f700] opacity-50 hover:opacity-100 transition-opacity">
+      👤 {{ user()?.email }}
+    </div>
+  }
+</div>
