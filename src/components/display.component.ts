@@ -273,14 +273,13 @@ import { EscapeRoomService } from '../services/escape-room.service';
       font-size: clamp(10px, 1.2vw, 16px);
     }
 
-    /* TOP 1 Section */
+    /* TOP 1 Section - Fixed position, doesn't expand */
     .top1-container {
-      flex: 1;
+      flex-shrink: 0;
       display: flex;
       flex-direction: column;
-      justify-content: center;
-      margin-bottom: clamp(12px, 2vw, 32px);
-      min-height: 0;
+      justify-content: flex-start;
+      margin-bottom: clamp(16px, 2vw, 32px);
     }
 
     .top1-badge {
@@ -306,16 +305,19 @@ import { EscapeRoomService } from '../services/escape-room.service';
       letter-spacing: -0.02em;
       font-family: 'Orbitron', sans-serif;
       line-height: 1.1;
-      margin-bottom: clamp(8px, 1vw, 16px);
       text-shadow: 0 0 20px rgba(2, 247, 0, 0.5);
-      /* Allow text to wrap naturally without breaking words */
+      /* Fixed height container - time always in same position */
+      height: clamp(40px, 6vw, 80px);
+      display: flex;
+      align-items: center;
+      overflow: hidden;
       word-break: normal;
       overflow-wrap: break-word;
     }
 
     .top1-time-container {
       display: flex;
-      align-items: baseline;
+      align-items: flex-end; /* Align to bottom */
       gap: clamp(12px, 2vw, 24px);
       flex-wrap: wrap;
     }
@@ -337,14 +339,16 @@ import { EscapeRoomService } from '../services/escape-room.service';
       border: 1px solid #444;
       padding: clamp(4px, 0.5vw, 8px) clamp(8px, 1vw, 16px);
       border-radius: 4px;
+      margin-bottom: clamp(8px, 1vw, 16px); /* Lift up to align with time baseline */
     }
 
-    /* Records Grid (2-10) - Fixed 3x3 layout */
+    /* Records Grid (2-10) - Fixed 3x3 layout, anchored at bottom */
     .records-grid {
       display: grid;
       grid-template-columns: repeat(3, 1fr);
       gap: clamp(4px, 0.6vw, 10px);
-      max-height: 45%;
+      margin-top: auto; /* Push to bottom of available space */
+      max-height: 50%;
       overflow-y: auto;
     }
     
@@ -579,6 +583,8 @@ export class DisplayComponent implements OnInit, OnDestroy {
 
   nextSlide() {
     this.currentSlide.update(curr => (curr + 1) % this.totalSlides);
+    // Recargar records en cada cambio de slide para mostrar nuevos registros
+    this.service.loadRecords();
   }
 
   getTopForRoom(roomId: string) {
