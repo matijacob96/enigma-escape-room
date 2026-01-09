@@ -17,9 +17,31 @@ import { EscapeRoomService } from '../services/escape-room.service';
       <!-- Main Content Area -->
       <div class="flex-1 relative overflow-hidden">
         
-        <!-- Room Slides -->
+        <!-- SLIDE 0: Logo / Welcome Screen (FIRST) -->
+        @if (currentSlide() === 0) {
+          <div class="absolute inset-0 fade-in flex items-center justify-center bg-black overflow-hidden">
+            <!-- Matrix Rain Effect Background -->
+            <div class="matrix-bg"></div>
+            
+            <div class="z-10 text-center logo-container">
+              <div class="logo-box">
+                <h1 class="logo-title">
+                  ENIGMA
+                </h1>
+                <h2 class="logo-subtitle">
+                  SALAS DE ESCAPE
+                </h2>
+              </div>
+              <p class="logo-tagline">
+                ¿PODRÁS ESCAPAR?
+              </p>
+            </div>
+          </div>
+        }
+
+        <!-- Room Slides (start from slide 1) -->
         @for (room of rooms(); track room.id; let idx = $index) {
-          @if (currentSlide() === idx) {
+          @if (currentSlide() === idx + 1) {
             <div class="absolute inset-0 fade-in flex h-full">
               
               <!-- Left Sidebar: Room Info (Hidden on very small screens) -->
@@ -113,28 +135,6 @@ import { EscapeRoomService } from '../services/escape-room.service';
               </div>
             </div>
           }
-        }
-
-        <!-- Decorative Slide (Logo / Idle Screen) -->
-        @if (currentSlide() === rooms().length) {
-          <div class="absolute inset-0 fade-in flex items-center justify-center bg-black overflow-hidden">
-            <!-- Matrix Rain Effect Background -->
-            <div class="matrix-bg"></div>
-            
-            <div class="z-10 text-center logo-container">
-              <div class="logo-box">
-                <h1 class="logo-title">
-                  ENIGMA
-                </h1>
-                <h2 class="logo-subtitle">
-                  SALAS DE ESCAPE
-                </h2>
-              </div>
-              <p class="logo-tagline">
-                ¿PODRÁS ESCAPAR?
-              </p>
-            </div>
-          </div>
         }
 
       </div>
