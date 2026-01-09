@@ -111,13 +111,13 @@ import { EscapeRoomService } from '../services/escape-room.service';
                        </div>
                     </div>
 
-                    <!-- Positions 2-10 -->
+                    <!-- Positions 2-10 (3x3 grid) -->
                     <div class="records-grid">
                       @for (record of topRecords.slice(1); track record.id; let i = $index) {
                         <div class="record-item" 
-                             [style.border-left-color]="i < 2 ? room.accentColor : '#444'">
+                             [style.border-left-color]="getPositionColor(i, room.accentColor)">
                           <div class="record-left">
-                             <div class="record-position" [style.color]="room.accentColor">
+                             <div class="record-position" [style.color]="getPositionColor(i, room.accentColor)">
                                {{ (i + 2).toString().padStart(2, '0') }}
                              </div>
                              <div class="record-team" [style.font-size]="getRecordFontSize(record.teamName)">
@@ -339,13 +339,25 @@ import { EscapeRoomService } from '../services/escape-room.service';
       border-radius: 4px;
     }
 
-    /* Records Grid (2-10) */
+    /* Records Grid (2-10) - Fixed 3x3 layout */
     .records-grid {
       display: grid;
-      grid-template-columns: repeat(auto-fit, minmax(min(100%, 280px), 1fr));
-      gap: clamp(6px, 1vw, 16px);
-      max-height: 40%;
+      grid-template-columns: repeat(3, 1fr);
+      gap: clamp(4px, 0.6vw, 10px);
+      max-height: 45%;
       overflow-y: auto;
+    }
+    
+    @media (max-width: 900px) {
+      .records-grid {
+        grid-template-columns: repeat(2, 1fr);
+      }
+    }
+    
+    @media (max-width: 500px) {
+      .records-grid {
+        grid-template-columns: 1fr;
+      }
     }
 
     .record-item {
@@ -354,8 +366,11 @@ import { EscapeRoomService } from '../services/escape-room.service';
       justify-content: space-between;
       background: rgba(17, 24, 39, 0.8);
       border-left: clamp(2px, 0.3vw, 4px) solid #444;
-      padding: clamp(8px, 1vw, 16px);
+      padding: clamp(6px, 0.8vw, 12px);
       transition: background 0.2s;
+      /* FIXED HEIGHT for consistent card sizes */
+      height: clamp(50px, 6vw, 80px);
+      box-sizing: border-box;
     }
 
     .record-item:hover {
@@ -369,15 +384,18 @@ import { EscapeRoomService } from '../services/escape-room.service';
     .record-left {
       display: flex;
       align-items: center;
-      gap: clamp(8px, 1vw, 16px);
+      gap: clamp(6px, 0.8vw, 12px);
       min-width: 0;
+      flex: 1;
+      overflow: hidden;
     }
 
     .record-position {
       font-family: monospace;
-      font-size: clamp(14px, 1.5vw, 24px);
+      font-size: clamp(12px, 1.3vw, 20px);
       font-weight: bold;
       flex-shrink: 0;
+      width: clamp(20px, 2.5vw, 36px);
     }
 
     .record-team {
@@ -385,10 +403,13 @@ import { EscapeRoomService } from '../services/escape-room.service';
       font-weight: bold;
       /* font-size is set dynamically via getRecordFontSize() */
       text-transform: uppercase;
-      line-height: 1.2;
-      /* Show full text, wrap if needed */
-      word-break: normal;
-      overflow-wrap: break-word;
+      line-height: 1.15;
+      /* Limit to 2 lines max */
+      display: -webkit-box;
+      -webkit-line-clamp: 2;
+      -webkit-box-orient: vertical;
+      overflow: hidden;
+      word-break: break-word;
       flex: 1;
       min-width: 0;
     }
@@ -396,10 +417,11 @@ import { EscapeRoomService } from '../services/escape-room.service';
     .record-time {
       color: #02f700;
       font-weight: bold;
-      font-size: clamp(16px, 2vw, 32px);
+      font-size: clamp(14px, 1.8vw, 28px);
       font-family: 'Orbitron', sans-serif;
-      letter-spacing: 0.05em;
+      letter-spacing: 0.02em;
       flex-shrink: 0;
+      margin-left: clamp(4px, 0.5vw, 8px);
     }
 
     /* No Records State */
@@ -590,16 +612,27 @@ export class DisplayComponent implements OnInit, OnDestroy {
     return 'clamp(16px, 2.5vw, 32px)'; // 60-80 chars
   }
 
-  // Adaptive font size for records 2-10 - shows FULL text
+  // Adaptive font size for records 2-10 - fits in 2 lines max (up to 80 chars)
   getRecordFontSize(teamName: string): string {
-    if (!teamName) return 'clamp(12px, 1.3vw, 22px)';
+    if (!teamName) return 'clamp(10px, 1.1vw, 16px)';
     const len = teamName.length;
     
-    if (len <= 15) return 'clamp(14px, 1.5vw, 24px)';
-    if (len <= 25) return 'clamp(12px, 1.3vw, 20px)';
-    if (len <= 35) return 'clamp(11px, 1.2vw, 18px)';
-    if (len <= 50) return 'clamp(10px, 1.1vw, 16px)';
-    return 'clamp(9px, 1vw, 14px)'; // 50-80 chars
+    // Calculate font size to fit in 2 lines within the card
+    if (len <= 10) return 'clamp(11px, 1.2vw, 18px)';   // 1 line easily
+    if (len <= 18) return 'clamp(10px, 1.1vw, 16px)';   // 1 line
+    if (len <= 28) return 'clamp(9px, 1vw, 14px)';      // 1-2 lines
+    if (len <= 40) return 'clamp(8px, 0.9vw, 12px)';    // 2 lines
+    if (len <= 55) return 'clamp(7px, 0.8vw, 11px)';    // 2 lines tight
+    if (len <= 70) return 'clamp(6.5px, 0.7vw, 10px)';  // 2 lines very tight
+    return 'clamp(6px, 0.65vw, 9px)';                    // 70-80 chars - smallest
+  }
+
+  // Get position color: 02 = silver, 03 = bronze, rest = accent or gray
+  getPositionColor(index: number, accentColor: string): string {
+    // index 0 = position 02, index 1 = position 03
+    if (index === 0) return '#C0C0C0'; // Silver
+    if (index === 1) return '#CD7F32'; // Bronze
+    return '#666'; // Gray for positions 04-10
   }
 
   // Adaptive font size for room title - no word breaking
