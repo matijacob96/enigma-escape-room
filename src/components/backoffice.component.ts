@@ -251,6 +251,27 @@ type Tab = 'records' | 'rooms';
                     <p class="text-gray-500 text-xs mt-1">Usa https://picsum.photos/800/600 para pruebas</p>
                   </div>
 
+                  <!-- Color Selector -->
+                  <div>
+                    <label class="block text-xs font-bold text-purple-400 mb-2 uppercase tracking-wider">Color de Acento</label>
+                    <div class="grid grid-cols-6 gap-2">
+                      @for (color of availableColors; track color.value) {
+                        <button 
+                          type="button"
+                          (click)="selectColor(color.value)"
+                          class="w-full aspect-square rounded-lg border-2 transition-all hover:scale-110"
+                          [style.background]="color.hex"
+                          [class.border-white]="roomForm.get('accentColor')?.value === color.value"
+                          [class.border-transparent]="roomForm.get('accentColor')?.value !== color.value"
+                          [class.ring-2]="roomForm.get('accentColor')?.value === color.value"
+                          [class.ring-white]="roomForm.get('accentColor')?.value === color.value"
+                          [title]="color.name"
+                        ></button>
+                      }
+                    </div>
+                    <p class="text-gray-500 text-xs mt-2">Este color se usará para los títulos y números en el display</p>
+                  </div>
+
                   <button 
                     type="submit" 
                     [disabled]="roomForm.invalid || isSubmitting()"
@@ -354,8 +375,29 @@ export class BackofficeComponent {
   // Room Form
   roomForm: FormGroup = this.fb.group({
     name: ['', Validators.required],
-    image: ['https://picsum.photos/seed/escape/800/600', Validators.required]
+    image: ['https://picsum.photos/seed/escape/800/600', Validators.required],
+    accentColor: ['#02f700', Validators.required]
   });
+
+  // Available Colors for rooms
+  availableColors = [
+    { name: 'Verde Neón', value: '#02f700', hex: '#02f700' },
+    { name: 'Cian', value: '#00d4ff', hex: '#00d4ff' },
+    { name: 'Magenta', value: '#ff00ff', hex: '#ff00ff' },
+    { name: 'Naranja', value: '#ff6600', hex: '#ff6600' },
+    { name: 'Amarillo', value: '#ffcc00', hex: '#ffcc00' },
+    { name: 'Rojo', value: '#ff3333', hex: '#ff3333' },
+    { name: 'Rosa', value: '#ff66b2', hex: '#ff66b2' },
+    { name: 'Púrpura', value: '#9933ff', hex: '#9933ff' },
+    { name: 'Azul', value: '#3366ff', hex: '#3366ff' },
+    { name: 'Turquesa', value: '#00ffcc', hex: '#00ffcc' },
+    { name: 'Lima', value: '#ccff00', hex: '#ccff00' },
+    { name: 'Blanco', value: '#ffffff', hex: '#ffffff' }
+  ];
+
+  selectColor(color: string) {
+    this.roomForm.patchValue({ accentColor: color });
+  }
 
   get rooms() {
     return this.service.rooms;
@@ -442,13 +484,14 @@ export class BackofficeComponent {
       this.isSubmitting.set(true);
       
       try {
-        const { name, image } = this.roomForm.value;
-        const success = await this.service.addRoom(name, image);
+        const { name, image, accentColor } = this.roomForm.value;
+        const success = await this.service.addRoom(name, image, accentColor);
         
         if (success) {
           this.roomForm.reset({
             name: '',
-            image: 'https://picsum.photos/seed/' + Math.floor(Math.random() * 1000) + '/800/600'
+            image: 'https://picsum.photos/seed/' + Math.floor(Math.random() * 1000) + '/800/600',
+            accentColor: '#02f700'
           });
           this.updateDefaultRoom();
         }

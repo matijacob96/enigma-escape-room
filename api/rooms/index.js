@@ -23,7 +23,7 @@ export default async function handler(req, res) {
         id: room.id,
         name: room.name,
         image: room.image,
-        themeColor: room.theme_color
+        accentColor: room.accent_color || room.theme_color || '#02f700'
       }));
 
       return res.json(rooms);
@@ -35,7 +35,7 @@ export default async function handler(req, res) {
   // POST - Crear sala (requiere autenticación)
   if (req.method === 'POST') {
     try {
-      const { name, image, themeColor } = req.body;
+      const { name, image, accentColor } = req.body;
       const token = extractToken(req);
       const client = getSupabaseClient(token);
       
@@ -44,7 +44,7 @@ export default async function handler(req, res) {
         .insert([{ 
           name, 
           image, 
-          theme_color: themeColor || 'purple' 
+          accent_color: accentColor || '#02f700' 
         }])
         .select()
         .single();
@@ -55,7 +55,7 @@ export default async function handler(req, res) {
         id: data.id,
         name: data.name,
         image: data.image,
-        themeColor: data.theme_color
+        accentColor: data.accent_color
       });
     } catch (error) {
       return res.status(400).json({ error: error.message });

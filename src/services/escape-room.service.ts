@@ -3,7 +3,7 @@ import { Injectable, signal, computed, effect } from '@angular/core';
 export interface Room {
   id: string;
   name: string;
-  themeColor: string;
+  accentColor: string;  // Color hex para títulos y números
   image: string;
 }
 
@@ -260,14 +260,14 @@ export class EscapeRoomService {
 
   // ==================== ROOM ACTIONS ====================
 
-  async addRoom(name: string, image: string, themeColor: string = 'purple'): Promise<boolean> {
+  async addRoom(name: string, image: string, accentColor: string = '#02f700'): Promise<boolean> {
     this.errorSignal.set(null);
     
     try {
       const response = await fetch(`${API_URL}/rooms`, {
         method: 'POST',
         headers: this.getAuthHeaders(),
-        body: JSON.stringify({ name, image, themeColor })
+        body: JSON.stringify({ name, image, accentColor })
       });
 
       const data = await response.json();
@@ -286,7 +286,7 @@ export class EscapeRoomService {
           id: crypto.randomUUID(),
           name,
           image,
-          themeColor
+          accentColor
         };
         this.roomsSignal.update(rooms => [...rooms, newRoom]);
         return true;
@@ -407,19 +407,19 @@ export class EscapeRoomService {
       { 
         id: 'room-1', 
         name: 'La Mansión Embrujada', 
-        themeColor: 'purple',
+        accentColor: '#9933ff',
         image: 'https://picsum.photos/id/1036/800/600'
       },
       { 
         id: 'room-2', 
         name: 'El Robo al Banco', 
-        themeColor: 'emerald',
+        accentColor: '#02f700',
         image: 'https://picsum.photos/id/1076/800/600'
       },
       { 
         id: 'room-3', 
         name: 'Laboratorio Alien', 
-        themeColor: 'cyan',
+        accentColor: '#00d4ff',
         image: 'https://picsum.photos/id/1026/800/600'
       }
     ];

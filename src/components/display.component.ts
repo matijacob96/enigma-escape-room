@@ -45,19 +45,19 @@ import { EscapeRoomService } from '../services/escape-room.service';
             <div class="absolute inset-0 fade-in flex h-full">
               
               <!-- Left Sidebar: Room Info (Hidden on very small screens) -->
-              <div class="room-sidebar">
-                 <!-- Image Background with Overlay -->
+              <div class="room-sidebar" [style.border-right-color]="room.accentColor + '4D'">
+                 <!-- Image Background with REDUCED Overlay -->
                  <div class="absolute inset-0 z-0">
-                    <img [src]="room.image" class="w-full h-full object-cover opacity-30 grayscale" alt="">
-                    <div class="absolute inset-0 bg-gradient-to-t from-black via-black/50 to-transparent"></div>
+                    <img [src]="room.image" class="w-full h-full object-cover opacity-60" alt="">
+                    <div class="absolute inset-0 bg-gradient-to-t from-black/80 via-black/30 to-transparent"></div>
                  </div>
 
-                 <!-- Room Title -->
-                 <div class="relative z-10 p-responsive h-full flex flex-col justify-end pb-responsive">
-                    <div class="room-label">
+                 <!-- Room Title - CONTAINED within sidebar -->
+                 <div class="relative z-10 p-responsive h-full flex flex-col justify-end pb-responsive overflow-hidden">
+                    <div class="room-label" [style.color]="room.accentColor" [style.border-left-color]="room.accentColor">
                       Sala actual
                     </div>
-                    <h2 class="room-title">
+                    <h2 class="room-title" [style.text-shadow]="'0 0 20px ' + room.accentColor + '80'">
                       {{ room.name }}
                     </h2>
                  </div>
@@ -65,15 +65,15 @@ import { EscapeRoomService } from '../services/escape-room.service';
 
               <!-- Right Main: Leaderboard -->
               <div class="leaderboard-main">
-                <!-- Grid Background Effect -->
-                <div class="grid-bg"></div>
+                <!-- Grid Background Effect with room color -->
+                <div class="grid-bg" [style.background-image]="'linear-gradient(' + room.accentColor + ' 1px, transparent 1px), linear-gradient(90deg, ' + room.accentColor + ' 1px, transparent 1px)'"></div>
 
                 <div class="relative z-10 h-full flex flex-col">
                   
                   <!-- Header -->
                   <div class="leaderboard-header">
-                    <h3 class="header-title">Top 10 Records</h3>
-                    <div class="header-subtitle">{{ room.name }}</div>
+                    <h3 class="header-title" [style.color]="room.accentColor">Top 10 Records</h3>
+                    <div class="header-subtitle" [style.color]="room.accentColor">{{ room.name }}</div>
                   </div>
 
                   @let topRecords = getTopForRoom(room.id)();
@@ -82,24 +82,24 @@ import { EscapeRoomService } from '../services/escape-room.service';
                     
                     <!-- TOP 1 - MASSIVE DISPLAY -->
                     <div class="top1-container">
-                       <div class="top1-badge">
+                       <div class="top1-badge" [style.color]="room.accentColor">
                          <svg xmlns="http://www.w3.org/2000/svg" class="badge-icon" viewBox="0 0 20 20" fill="currentColor">
                            <path fill-rule="evenodd" d="M10 2a1 1 0 011 1v1.323l3.954 1.582 1.699-3.181a1 1 0 011.827.954L17.18 7.519l2.58 4.73a1.002 1.002 0 01-.937 1.506h-3.228l-2.81 5.15a1 1 0 01-1.75 0l-2.81-5.15H4.938a1.002 1.002 0 01-.938-1.506l2.58-4.73L5.228 3.674a1 1 0 011.827-.954L8.754 5.905 12.708 4.323V3a1 1 0 011-1z" clip-rule="evenodd" />
                          </svg>
                          RÉCORD #1
                        </div>
                        
-                       <!-- Team Name -->
-                       <div class="top1-team">
-                         {{ topRecords[0].teamName }}
+                       <!-- Team Name - WITH WRAP TEXT -->
+                       <div class="top1-team" [style.color]="room.accentColor" [style.text-shadow]="'0 0 20px ' + room.accentColor + '80'">
+                         {{ truncateText(topRecords[0].teamName, 25) }}
                        </div>
                        
                        <!-- Time -->
                        <div class="top1-time-container">
-                         <div class="top1-time">
+                         <div class="top1-time" [style.text-shadow]="'0 0 30px ' + room.accentColor + '50'">
                            {{ formatTime(topRecords[0].timeInSeconds) }}
                          </div>
-                         <div class="top1-date">
+                         <div class="top1-date" [style.border-color]="room.accentColor + '60'">
                            {{ formatDate(topRecords[0].date) }}
                          </div>
                        </div>
@@ -108,17 +108,15 @@ import { EscapeRoomService } from '../services/escape-room.service';
                     <!-- Positions 2-10 -->
                     <div class="records-grid">
                       @for (record of topRecords.slice(1); track record.id; let i = $index) {
-                        <div class="record-item" [class.record-podium]="i < 2">
+                        <div class="record-item" 
+                             [style.border-left-color]="i < 2 ? room.accentColor : '#444'">
                           <div class="record-left">
-                             <div class="record-position" 
-                                  [class.text-gray-400]="i === 0"
-                                  [class.text-amber-600]="i === 1"
-                                  [class.text-gray-500]="i > 1">
+                             <div class="record-position" [style.color]="room.accentColor">
                                {{ (i + 2).toString().padStart(2, '0') }}
                              </div>
-                             <div class="record-team">{{ record.teamName }}</div>
+                             <div class="record-team">{{ truncateText(record.teamName, 18) }}</div>
                           </div>
-                          <div class="record-time">
+                          <div class="record-time" [style.color]="room.accentColor">
                             {{ formatTime(record.timeInSeconds) }}
                           </div>
                         </div>
@@ -127,8 +125,8 @@ import { EscapeRoomService } from '../services/escape-room.service';
 
                   } @else {
                     <div class="no-records">
-                      <div class="no-records-icon">???</div>
-                      <div class="no-records-text">Sin Récords</div>
+                      <div class="no-records-icon" [style.color]="room.accentColor">???</div>
+                      <div class="no-records-text" [style.color]="room.accentColor">Sin Récords</div>
                     </div>
                   }
                 </div>
@@ -205,9 +203,12 @@ import { EscapeRoomService } from '../services/escape-room.service';
       font-weight: 900;
       color: white;
       text-transform: uppercase;
-      line-height: 1;
+      line-height: 1.1;
       font-family: 'Orbitron', sans-serif;
       text-shadow: 2px 2px 4px rgba(0,0,0,0.8);
+      word-break: break-word;
+      overflow-wrap: break-word;
+      max-width: 100%;
     }
 
     /* Leaderboard Main */
@@ -369,10 +370,10 @@ import { EscapeRoomService } from '../services/escape-room.service';
       font-weight: bold;
       font-size: clamp(12px, 1.3vw, 22px);
       text-transform: uppercase;
-      white-space: nowrap;
-      overflow: hidden;
-      text-overflow: ellipsis;
-      max-width: clamp(100px, 15vw, 250px);
+      line-height: 1.2;
+      word-break: break-word;
+      flex: 1;
+      min-width: 0;
     }
 
     .record-time {
@@ -554,5 +555,11 @@ export class DisplayComponent implements OnInit, OnDestroy {
   formatDate(isoString: string): string {
     const d = new Date(isoString);
     return d.toLocaleDateString();
+  }
+
+  truncateText(text: string, maxLength: number): string {
+    if (!text) return '';
+    if (text.length <= maxLength) return text;
+    return text.substring(0, maxLength).trim() + '...';
   }
 }
