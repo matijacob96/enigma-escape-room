@@ -138,7 +138,7 @@ import { EscapeRoomService } from '../services/escape-room.service';
       <!-- Footer Ticker -->
       <div class="ticker-container">
         <div class="ticker-content">
-          BIENVENIDOS A ENIGMA SALAS DE ESCAPE  ///  ¿TIENES LO QUE SE NECESITA PARA ESCAPAR?  ///  REGISTRA TU EQUIPO EN RECEPCIÓN  ///  ¡DESAFÍA TUS LÍMITES!  ///  TOP 10 EN PANTALLA  ///  
+          BIENVENIDOS A ENIGMA SALAS DE ESCAPE  ///  ¿TIENES LO QUE SE NECESITA PARA ESCAPAR?  ///  REGISTRA TU EQUIPO EN RECEPCIÓN  ///  ¡DESAFÍA TUS LÍMITES!  ///  TOP 10 EN PANTALLA  
         </div>
       </div>
     </div>
@@ -538,26 +538,25 @@ import { EscapeRoomService } from '../services/escape-room.service';
       width: auto;
       max-width: 90vw; /* No se sale del ancho */
       object-fit: contain;
-      filter: drop-shadow(0 0 10px rgba(2, 247, 0, 0.5)) drop-shadow(0 0 20px rgba(2, 247, 0, 0.3));
-      animation: logoPulse 3s ease-in-out infinite;
-    }
-
-    @keyframes logoPulse {
-      0%, 100% { filter: drop-shadow(0 0 10px rgba(2, 247, 0, 0.5)) drop-shadow(0 0 20px rgba(2, 247, 0, 0.3)); }
-      50% { filter: drop-shadow(0 0 15px rgba(2, 247, 0, 0.7)) drop-shadow(0 0 30px rgba(2, 247, 0, 0.5)); }
+      animation: glowPulse 3s ease-in-out infinite;
     }
 
     .logo-tagline {
       color: #02f700;
       font-size: clamp(14px, 2.5vh, 32px);
       font-family: monospace;
-      animation: pulse 2s ease-in-out infinite;
+      animation: textGlowPulse 3s ease-in-out infinite;
       letter-spacing: 0.5em;
     }
 
-    @keyframes pulse {
-      0%, 100% { opacity: 1; }
-      50% { opacity: 0.5; }
+    @keyframes glowPulse {
+      0%, 100% { filter: drop-shadow(0 0 8px rgba(2, 247, 0, 0.3)) drop-shadow(0 0 15px rgba(2, 247, 0, 0.2)); }
+      50% { filter: drop-shadow(0 0 20px rgba(2, 247, 0, 0.8)) drop-shadow(0 0 40px rgba(2, 247, 0, 0.5)); }
+    }
+
+    @keyframes textGlowPulse {
+      0%, 100% { text-shadow: 0 0 5px rgba(2, 247, 0, 0.3); }
+      50% { text-shadow: 0 0 15px rgba(2, 247, 0, 0.8), 0 0 30px rgba(2, 247, 0, 0.5); }
     }
 
     /* Ticker */
@@ -654,7 +653,10 @@ export class DisplayComponent implements OnInit, OnDestroy {
   
   formatDate(isoString: string): string {
     const d = new Date(isoString);
-    return d.toLocaleDateString();
+    const day = d.getDate().toString().padStart(2, '0');
+    const month = (d.getMonth() + 1).toString().padStart(2, '0');
+    const year = d.getFullYear();
+    return `${day}/${month}/${year}`;
   }
 
   // Adaptive font size for TOP 1 team name - SINGLE LINE, fits width
