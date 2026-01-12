@@ -1,78 +1,92 @@
 <!DOCTYPE html>
 <html lang="es">
-
-<head>
+  <head>
     <meta charset="utf-8" />
     <title>ENIGMA - Salas de Escape</title>
     <base href="/" />
-    <link rel="icon" type="image/svg+xml" href="/src/assets/enigma-logo-flat.svg" />
+    <link rel="icon" type="image/png" href="/src/assets/favicon.png" />
     <meta name="viewport" content="width=device-width, initial-scale=1" />
     <script src="https://cdn.tailwindcss.com"></script>
     <link rel="preconnect" href="https://fonts.googleapis.com" />
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
-    <link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@400;700;900&family=Roboto:wght@300;400;500&display=swap" rel="stylesheet" />
+    <link
+      href="https://fonts.googleapis.com/css2?family=Orbitron:wght@400;700;900&family=Roboto:wght@300;400;500&display=swap"
+      rel="stylesheet"
+    />
     <style>
-        body {
-            font-family: 'Roboto', sans-serif;
-            background-color: #050505;
-            color: white;
-            overflow: hidden;
+      body {
+        font-family: 'Roboto', sans-serif;
+        background-color: #050505;
+        color: white;
+        overflow: hidden;
+      }
+
+      h1,
+      h2,
+      h3,
+      .brand-font,
+      .digital-font {
+        font-family: 'Orbitron', sans-serif;
+      }
+
+      .fade-in {
+        animation: fadeIn 0.8s cubic-bezier(0.4, 0, 0.2, 1);
+      }
+
+      @keyframes fadeIn {
+        from {
+          opacity: 0;
+          transform: scale(0.98);
         }
-        
-        h1,
-        h2,
-        h3,
-        .brand-font,
-        .digital-font {
-            font-family: 'Orbitron', sans-serif;
+        to {
+          opacity: 1;
+          transform: scale(1);
         }
-        
-        .fade-in {
-            animation: fadeIn 0.8s cubic-bezier(0.4, 0, 0.2, 1);
-        }
-        
-        @keyframes fadeIn {
-            from {
-                opacity: 0;
-                transform: scale(0.98);
-            }
-            to {
-                opacity: 1;
-                transform: scale(1);
-            }
-        }
-        
-        .neon-text {
-            text-shadow: 0 0 5px #02f700, 0 0 10px #02f700;
-        }
-        
-        .neon-box {
-            box-shadow: 0 0 15px rgba(2, 247, 0, 0.3), inset 0 0 10px rgba(2, 247, 0, 0.1);
-        }
-        /* Matrix-like scrollbar */
-        
-         ::-webkit-scrollbar {
-            width: 8px;
-        }
-        
-         ::-webkit-scrollbar-track {
-            background: #000;
-        }
-        
-         ::-webkit-scrollbar-thumb {
-            background: #02f700;
-        }
+      }
+
+      .neon-text {
+        text-shadow: 0 0 5px #02f700, 0 0 10px #02f700;
+      }
+
+      .neon-box {
+        box-shadow: 0 0 15px rgba(2, 247, 0, 0.3),
+          inset 0 0 10px rgba(2, 247, 0, 0.1);
+      }
+      /* Matrix-like scrollbar */
+
+      ::-webkit-scrollbar {
+        width: 8px;
+      }
+
+      ::-webkit-scrollbar-track {
+        background: #000;
+      }
+
+      ::-webkit-scrollbar-thumb {
+        background: #02f700;
+      }
     </style>
     <script type="importmap">
-        { "imports": { "rxjs": "https://esm.sh/rxjs@^7.8.2?conditions=es2015", "rxjs/operators": "https://esm.sh/rxjs@^7.8.2/operators?conditions=es2015", "rxjs/ajax": "https://esm.sh/rxjs@^7.8.2/ajax?conditions=es2015", "rxjs/webSocket": "https://esm.sh/rxjs@^7.8.2/webSocket?conditions=es2015",
-        "rxjs/testing": "https://esm.sh/rxjs@^7.8.2/testing?conditions=es2015", "rxjs/fetch": "https://esm.sh/rxjs@^7.8.2/fetch?conditions=es2015", "@angular/common": "https://esm.sh/@angular/common@^21.0.8?external=rxjs", "@angular/compiler": "https://esm.sh/@angular/compiler@^21.0.8?external=rxjs",
-        "@angular/forms": "https://esm.sh/@angular/forms@^21.0.8?external=rxjs", "@angular/core": "https://esm.sh/@angular/core@^21.0.8?external=rxjs", "@angular/platform-browser": "https://esm.sh/@angular/platform-browser@^21.0.8?external=rxjs" } }
+      {
+        "imports": {
+          "rxjs": "https://esm.sh/rxjs@^7.8.2?conditions=es2015",
+          "rxjs/operators": "https://esm.sh/rxjs@^7.8.2/operators?conditions=es2015",
+          "rxjs/ajax": "https://esm.sh/rxjs@^7.8.2/ajax?conditions=es2015",
+          "rxjs/webSocket": "https://esm.sh/rxjs@^7.8.2/webSocket?conditions=es2015",
+          "rxjs/testing": "https://esm.sh/rxjs@^7.8.2/testing?conditions=es2015",
+          "rxjs/fetch": "https://esm.sh/rxjs@^7.8.2/fetch?conditions=es2015",
+          "@angular/common": "https://esm.sh/@angular/common@^21.0.8?external=rxjs",
+          "@angular/compiler": "https://esm.sh/@angular/compiler@^21.0.8?external=rxjs",
+          "@angular/forms": "https://esm.sh/@angular/forms@^21.0.8?external=rxjs",
+          "@angular/core": "https://esm.sh/@angular/core@^21.0.8?external=rxjs",
+          "@angular/platform-browser": "https://esm.sh/@angular/platform-browser@^21.0.8?external=rxjs"
+        }
+      }
     </script>
     <link rel="stylesheet" href="/index.css" />
-</head>
+  </head>
 
-<body>
+  <body>
     <app-root></app-root>
-</body>
-
+  </body>
 </html>
