@@ -35,12 +35,18 @@ export class EscapeRoomService {
   private recordsSignal = signal<GameRecord[]>([]);
   private userSignal = signal<User | null>(null);
   private tokenSignal = signal<string | null>(null);
+  private refreshTokenSignal = signal<string | null>(null);
+  private tokenExpiresAtSignal = signal<number | null>(null);
   private loadingSignal = signal(false);
   private errorSignal = signal<string | null>(null);
+  private isRefreshing = false;
+  private refreshPromise: Promise<boolean> | null = null;
 
   constructor() {
     this.loadStoredSession();
     this.loadData();
+    // Iniciar auto-refresh check cada 5 minutos
+    this.startAutoRefresh();
   }
 
   // Getters públicos
@@ -72,30 +78,135 @@ export class EscapeRoomService {
 
   private loadStoredSession() {
     const token = localStorage.getItem('enigma_token');
+    const refreshToken = localStorage.getItem('enigma_refresh_token');
+    const expiresAt = localStorage.getItem('enigma_token_expires_at');
     const userStr = localStorage.getItem('enigma_user');
     
     if (token && userStr) {
       try {
         this.tokenSignal.set(token);
+        this.refreshTokenSignal.set(refreshToken);
+        this.tokenExpiresAtSignal.set(expiresAt ? parseInt(expiresAt) : null);
         this.userSignal.set(JSON.parse(userStr));
+        
+        // Verificar si el token ya expiró al cargar
+        if (this.isTokenExpired()) {
+          this.refreshSession();
+        }
       } catch (e) {
         this.clearSession();
       }
     }
   }
 
-  private saveSession(token: string, user: User) {
+  private saveSession(token: string, user: User, refreshToken?: string, expiresAt?: number) {
     localStorage.setItem('enigma_token', token);
     localStorage.setItem('enigma_user', JSON.stringify(user));
     this.tokenSignal.set(token);
     this.userSignal.set(user);
+    
+    if (refreshToken) {
+      localStorage.setItem('enigma_refresh_token', refreshToken);
+      this.refreshTokenSignal.set(refreshToken);
+    }
+    
+    if (expiresAt) {
+      localStorage.setItem('enigma_token_expires_at', expiresAt.toString());
+      this.tokenExpiresAtSignal.set(expiresAt);
+    }
   }
 
   private clearSession() {
     localStorage.removeItem('enigma_token');
+    localStorage.removeItem('enigma_refresh_token');
+    localStorage.removeItem('enigma_token_expires_at');
     localStorage.removeItem('enigma_user');
     this.tokenSignal.set(null);
+    this.refreshTokenSignal.set(null);
+    this.tokenExpiresAtSignal.set(null);
     this.userSignal.set(null);
+  }
+
+  // Verifica si el token está por expirar (5 minutos antes)
+  private isTokenExpired(): boolean {
+    const expiresAt = this.tokenExpiresAtSignal();
+    if (!expiresAt) return false;
+    
+    const now = Math.floor(Date.now() / 1000);
+    const bufferSeconds = 300; // 5 minutos de buffer
+    return now >= (expiresAt - bufferSeconds);
+  }
+
+  // Refresca la sesión usando el refresh token
+  async refreshSession(): Promise<boolean> {
+    const refreshToken = this.refreshTokenSignal();
+    if (!refreshToken) {
+      this.clearSession();
+      return false;
+    }
+
+    // Evitar múltiples refresh simultáneos
+    if (this.isRefreshing && this.refreshPromise) {
+      return this.refreshPromise;
+    }
+
+    this.isRefreshing = true;
+    this.refreshPromise = this.doRefresh(refreshToken);
+    
+    try {
+      return await this.refreshPromise;
+    } finally {
+      this.isRefreshing = false;
+      this.refreshPromise = null;
+    }
+  }
+
+  private async doRefresh(refreshToken: string): Promise<boolean> {
+    try {
+      const response = await fetch(`${API_URL}/auth/refresh`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ refresh_token: refreshToken })
+      });
+
+      if (!response.ok) {
+        this.clearSession();
+        return false;
+      }
+
+      const data = await response.json();
+      this.saveSession(
+        data.session.access_token,
+        { id: data.user.id, email: data.user.email },
+        data.session.refresh_token,
+        data.session.expires_at
+      );
+      
+      return true;
+    } catch (error) {
+      console.error('Error refreshing session:', error);
+      this.clearSession();
+      return false;
+    }
+  }
+
+  // Inicia el auto-refresh cada 5 minutos
+  private startAutoRefresh() {
+    setInterval(() => {
+      if (this.tokenSignal() && this.isTokenExpired()) {
+        this.refreshSession();
+      }
+    }, 5 * 60 * 1000); // Check cada 5 minutos
+  }
+
+  // Asegura que el token sea válido antes de hacer una request
+  private async ensureValidToken(): Promise<boolean> {
+    if (!this.tokenSignal()) return false;
+    
+    if (this.isTokenExpired()) {
+      return await this.refreshSession();
+    }
+    return true;
   }
 
   private getAuthHeaders(): HeadersInit {
@@ -107,6 +218,37 @@ export class EscapeRoomService {
       headers['Authorization'] = `Bearer ${token}`;
     }
     return headers;
+  }
+
+  // Wrapper para hacer requests autenticadas con auto-refresh
+  private async authenticatedFetch(url: string, options: RequestInit = {}): Promise<Response> {
+    // Asegurar token válido antes de la request
+    await this.ensureValidToken();
+    
+    const response = await fetch(url, {
+      ...options,
+      headers: {
+        ...this.getAuthHeaders(),
+        ...(options.headers || {})
+      }
+    });
+
+    // Si recibimos 401, intentar refresh y reintentar
+    if (response.status === 401 && this.refreshTokenSignal()) {
+      const refreshed = await this.refreshSession();
+      if (refreshed) {
+        // Reintentar con el nuevo token
+        return fetch(url, {
+          ...options,
+          headers: {
+            ...this.getAuthHeaders(),
+            ...(options.headers || {})
+          }
+        });
+      }
+    }
+
+    return response;
   }
 
   async login(email: string, password: string): Promise<boolean> {
@@ -126,10 +268,12 @@ export class EscapeRoomService {
         throw new Error(data.error || 'Error al iniciar sesión');
       }
 
-      this.saveSession(data.session.access_token, {
-        id: data.user.id,
-        email: data.user.email
-      });
+      this.saveSession(
+        data.session.access_token,
+        { id: data.user.id, email: data.user.email },
+        data.session.refresh_token,
+        data.session.expires_at
+      );
       
       return true;
     } catch (error: any) {
@@ -168,9 +312,8 @@ export class EscapeRoomService {
 
   async logout(): Promise<void> {
     try {
-      await fetch(`${API_URL}/auth/logout`, {
-        method: 'POST',
-        headers: this.getAuthHeaders()
+      await this.authenticatedFetch(`${API_URL}/auth/logout`, {
+        method: 'POST'
       });
     } catch (e) {
       // Ignorar errores de logout
@@ -188,6 +331,7 @@ export class EscapeRoomService {
       const params = new URLSearchParams(hash.substring(1));
       const accessToken = params.get('access_token');
       const refreshToken = params.get('refresh_token');
+      const expiresAt = params.get('expires_at');
       const type = params.get('type');
       
       if (accessToken) {
@@ -201,10 +345,12 @@ export class EscapeRoomService {
 
           if (response.ok) {
             const data = await response.json();
-            this.saveSession(accessToken, {
-              id: data.user.id,
-              email: data.user.email
-            });
+            this.saveSession(
+              accessToken,
+              { id: data.user.id, email: data.user.email },
+              refreshToken || undefined,
+              expiresAt ? parseInt(expiresAt) : undefined
+            );
             
             // Limpiar el hash de la URL
             window.history.replaceState(null, '', window.location.pathname);
@@ -267,9 +413,8 @@ export class EscapeRoomService {
     this.errorSignal.set(null);
     
     try {
-      const response = await fetch(`${API_URL}/rooms`, {
+      const response = await this.authenticatedFetch(`${API_URL}/rooms`, {
         method: 'POST',
-        headers: this.getAuthHeaders(),
         body: JSON.stringify({ name, image, accentColor })
       });
 
@@ -304,9 +449,8 @@ export class EscapeRoomService {
     this.errorSignal.set(null);
     
     try {
-      const response = await fetch(`${API_URL}/rooms/${id}`, {
+      const response = await this.authenticatedFetch(`${API_URL}/rooms/${id}`, {
         method: 'PUT',
-        headers: this.getAuthHeaders(),
         body: JSON.stringify({ name, image, accentColor })
       });
 
@@ -338,9 +482,8 @@ export class EscapeRoomService {
     this.errorSignal.set(null);
     
     try {
-      const response = await fetch(`${API_URL}/rooms/reorder`, {
+      const response = await this.authenticatedFetch(`${API_URL}/rooms/reorder`, {
         method: 'PUT',
-        headers: this.getAuthHeaders(),
         body: JSON.stringify({ orderedIds })
       });
 
@@ -378,9 +521,8 @@ export class EscapeRoomService {
     this.errorSignal.set(null);
     
     try {
-      const response = await fetch(`${API_URL}/rooms/${id}`, {
-        method: 'DELETE',
-        headers: this.getAuthHeaders()
+      const response = await this.authenticatedFetch(`${API_URL}/rooms/${id}`, {
+        method: 'DELETE'
       });
 
       if (!response.ok) {
@@ -410,9 +552,8 @@ export class EscapeRoomService {
     const timeInSeconds = (minutes * 60) + seconds;
     
     try {
-      const response = await fetch(`${API_URL}/records`, {
+      const response = await this.authenticatedFetch(`${API_URL}/records`, {
         method: 'POST',
-        headers: this.getAuthHeaders(),
         body: JSON.stringify({ teamName, roomId, timeInSeconds })
       });
 
@@ -446,9 +587,8 @@ export class EscapeRoomService {
     this.errorSignal.set(null);
     
     try {
-      const response = await fetch(`${API_URL}/records/${id}`, {
-        method: 'DELETE',
-        headers: this.getAuthHeaders()
+      const response = await this.authenticatedFetch(`${API_URL}/records/${id}`, {
+        method: 'DELETE'
       });
 
       if (!response.ok) {

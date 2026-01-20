@@ -48,13 +48,13 @@ import { EscapeRoomService } from '../services/escape-room.service';
                  <div class="relative z-10 h-full flex flex-col justify-end">
                     <div class="room-title-container" [style.background]="'linear-gradient(to top, rgba(0,0,0,0.95) 0%, rgba(0,0,0,0.7) 70%, transparent 100%)'">
                       <div class="room-label" [style.color]="room.accentColor" [style.border-left-color]="room.accentColor">
-                        Sala actual
-                      </div>
+                      Sala actual
+                    </div>
                       <h2 class="room-title" 
                           [style.text-shadow]="'0 0 20px ' + room.accentColor + '80'"
                           [style.font-size]="getRoomTitleSize(room.name)">
-                        {{ room.name }}
-                      </h2>
+                      {{ room.name }}
+                    </h2>
                     </div>
                  </div>
               </div>

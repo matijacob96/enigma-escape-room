@@ -149,7 +149,7 @@ type Tab = 'records' | 'rooms';
                         Guardando...
                       </span>
                     } @else {
-                      Guardar Récord
+                    Guardar Récord
                     }
                   </button>
                   
@@ -290,7 +290,7 @@ type Tab = 'records' | 'rooms';
                         Creando...
                       </span>
                     } @else {
-                      Crear Sala
+                    Crear Sala
                     }
                   </button>
                 </form>
@@ -331,7 +331,7 @@ type Tab = 'records' | 'rooms';
                               <div class="text-white font-bold text-lg truncate">{{ room.name }}</div>
                             </div>
                             <div class="text-xs text-gray-500 font-mono">Slide #{{ idx + 1 }}</div>
-                         </div>
+                       </div>
                          <div class="flex gap-2">
                            <button 
                              (click)="startEditRoom(room)"
@@ -339,19 +339,19 @@ type Tab = 'records' | 'rooms';
                            >
                              Editar
                            </button>
-                           <button 
-                             (click)="deleteRoom(room.id)"
+                       <button 
+                         (click)="deleteRoom(room.id)"
                              [disabled]="deletingId() === room.id"
                              class="px-3 py-2 text-red-500 border border-red-900 hover:bg-red-900/20 text-xs uppercase font-bold transition-all disabled:opacity-50 flex items-center gap-2"
-                           >
+                       >
                              @if (deletingId() === room.id) {
                                <svg class="animate-spin h-4 w-4" viewBox="0 0 24 24">
                                  <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4" fill="none"></circle>
                                  <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z"></path>
                                </svg>
                              }
-                             Borrar
-                           </button>
+                         Borrar
+                       </button>
                          </div>
                        </div>
                        
@@ -556,7 +556,7 @@ export class BackofficeComponent {
       await this.service.deleteRecord(id);
     } finally {
       this.deletingId.set(null);
-    }
+  }
   }
 
   async deleteRoom(id: string) {
@@ -567,7 +567,7 @@ export class BackofficeComponent {
       await this.service.deleteRoom(id);
     } finally {
       this.deletingId.set(null);
-    }
+  }
   }
 
   async onSubmitRecord() {
@@ -579,15 +579,15 @@ export class BackofficeComponent {
         const success = await this.service.addRecord(teamName, roomId, minutes, seconds);
         
         if (success) {
-          this.recordForm.reset({
-            teamName: '',
-            roomId: roomId, // Keep selected room
-            minutes: 45,
-            seconds: 0
-          });
-          
-          this.successMessage.set(true);
-          setTimeout(() => this.successMessage.set(false), 3000);
+      this.recordForm.reset({
+        teamName: '',
+        roomId: roomId, // Keep selected room
+        minutes: 45,
+        seconds: 0
+      });
+      
+      this.successMessage.set(true);
+      setTimeout(() => this.successMessage.set(false), 3000);
         }
       } finally {
         this.isSubmitting.set(false);
@@ -604,13 +604,13 @@ export class BackofficeComponent {
         const success = await this.service.addRoom(name, image, accentColor);
         
         if (success) {
-          this.roomForm.reset({
-            name: '',
+      this.roomForm.reset({
+        name: '',
             image: 'https://picsum.photos/seed/' + Math.floor(Math.random() * 1000) + '/800/600',
             accentColor: '#02f700'
-          });
-          this.updateDefaultRoom();
-        }
+      });
+      this.updateDefaultRoom();
+    }
       } finally {
         this.isSubmitting.set(false);
       }

@@ -9,7 +9,7 @@
       </div>
     </div>
   } @else {
-    <!-- Content Area -->
+  <!-- Content Area -->
     @if (viewMode() === 'login') {
       <app-login 
         class="block h-full w-full" 
@@ -17,10 +17,10 @@
         (guestMode)="goToDisplay()"
       />
     } @else if (viewMode() === 'admin') {
-      <app-backoffice class="block h-full w-full" />
-    } @else {
-      <app-display class="block h-full w-full" />
-    }
+    <app-backoffice class="block h-full w-full" />
+  } @else {
+    <app-display class="block h-full w-full" />
+  }
   }
 
   <!-- View Switcher (Fixed Position) - Only show when not on login -->
@@ -44,22 +44,22 @@
         </button>
       }
 
-      <button 
+    <button 
         (click)="viewMode() === 'admin' ? goToDisplay() : goToAdmin()" 
         class="bg-gray-800 border border-gray-600 rounded-full p-2 text-xs text-gray-400 hover:text-white hover:bg-gray-700 shadow-lg transition-all"
         title="Cambiar vista"
-      >
-        @if (viewMode() === 'admin') {
-          <span>📺 Ir a TV</span>
-        } @else {
+    >
+      @if (viewMode() === 'admin') {
+        <span>📺 Ir a TV</span>
+      } @else {
           @if (isAuthenticated()) {
-            <span>⚙️ Admin</span>
+        <span>⚙️ Admin</span>
           } @else {
             <span>🔑 Login</span>
           }
-        }
-      </button>
-    </div>
+      }
+    </button>
+  </div>
   }
 
   <!-- User Info Badge - Show when authenticated and in admin mode -->
